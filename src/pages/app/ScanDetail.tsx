@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { SCANS_CHANGED } from "../../components/Layout";
 import { ScanResult } from "../../components/ScanResult";
 import { IconTrash } from "../../components/icons";
 import { Button, EmptyState, ErrorState, LoadingState, toast } from "../../components/ui";
@@ -30,13 +31,14 @@ export default function ScanDetail() {
     if (!window.confirm(t("scan.deleteConfirm"))) return;
     const { error } = await supabase.rpc("delete_my_scan", { p_scan: id });
     if (error) return toast(errorText(t, error), "error");
-    nav("/app", { replace: true });
+    window.dispatchEvent(new Event(SCANS_CHANGED));
+    nav("/history", { replace: true });
   }
 
   return (
     <div className="page">
       <header className="page-head">
-        <Link to="/app" className="link-btn">← {t("scan.openAll")}</Link>
+        <Link to="/history" className="link-btn">← {t("scan.openAll")}</Link>
       </header>
       {failed ? <ErrorState onRetry={load} />
         : scan === undefined ? <LoadingState />

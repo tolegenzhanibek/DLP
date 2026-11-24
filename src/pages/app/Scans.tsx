@@ -1,49 +1,47 @@
-import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearchParams } from "react-router-dom";
-import { IconChevron, IconDoc, IconUpload } from "../../components/icons";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { Composer } from "../../components/Composer";
+import { IconDoc } from "../../components/icons";
+import { SCANS_CHANGED } from "../../components/Layout";
 import { ScanResult } from "../../components/ScanResult";
 import { Tour } from "../../components/Tour";
-import { Button, EmptyState, ErrorState, LevelBadge, LoadingState, ReviewBadge, Segmented } from "../../components/ui";
+import { Spinner } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { ExtractError, extractText, MAX_CHARS, sha256Hex } from "../../lib/extract";
-import { fmtDateTime } from "../../lib/format";
 import { callFunction, supabase } from "../../lib/supabase";
-import type { ReviewStatus, Scan } from "../../lib/types";
+import type { Scan } from "../../lib/types";
 
-type Phase = "idle" | "extracting" | "analyzing";
-const FILTERS: ("all" | ReviewStatus)[] = ["all", "pending", "confirmed", "disputed", "rejected"];
+interface Turn {
+  id: string;
+  label: string; // file name or text snippet shown as the "user message"
+  isFile: boolean;
+  phase: "extracting" | "analyzing" | "done" | "error";
+  scan?: Scan;
+  error?: string;
+}
 
 export default function Scans() {
   const { t } = useTranslation();
   const { profile, patchProfile } = useAuth();
   const [params, setParams] = useSearchParams();
-  const [mode, setMode] = useState<"file" | "text">("file");
-  const [text, setText] = useState("");
-  const [phase, setPhase] = useState<Phase>("idle");
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Scan | null>(null);
-  const [history, setHistory] = useState<Scan[] | null>(null);
-  const [historyError, setHistoryError] = useState(false);
-  const [filter, setFilter] = useState<"all" | ReviewStatus>("all");
-  const [drag, setDrag] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
+  const loc = useLocation();
+  const [turns, setTurns] = useState<Turn[]>([]);
+  const bottom = useRef<HTMLDivElement>(null);
+  const busy = turns.some((x) => x.phase === "extracting" || x.phase === "analyzing");
   const showTour = Boolean(profile && (!profile.onboarded_at || params.get("tour") === "1"));
 
-  const load = useCallback(async () => {
-    setHistoryError(false);
-    let q = supabase.from("scans").select("*").eq("owner_id", profile!.id).order("created_at", { ascending: false }).limit(50);
-    if (filter !== "all") q = q.eq("review_status", filter);
-    const { data, error } = await q;
-    if (error) return setHistoryError(true);
-    setHistory(data as Scan[]);
-  }, [filter, profile]);
+  // "New check" in the sidebar starts a fresh thread.
+  const fresh = (loc.state as { fresh?: number } | null)?.fresh;
+  useEffect(() => {
+    if (fresh) setTurns([]);
+  }, [fresh]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [turns]);
 
-  // Live updates of own scans (admin decisions arrive here).
+  // Admin decisions arrive live.
   useEffect(() => {
     if (!profile) return;
     const ch = supabase
@@ -51,51 +49,52 @@ export default function Scans() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "scans", filter: `owner_id=eq.${profile.id}` },
         (p) => {
           const s = p.new as Scan;
-          setHistory((h) => h?.map((x) => (x.id === s.id ? { ...x, ...s } : x)) ?? h);
-          setResult((r) => (r?.id === s.id ? { ...r, ...s } : r));
+          setTurns((list) => list.map((x) => (x.scan?.id === s.id ? { ...x, scan: { ...x.scan, ...s } } : x)));
         })
       .subscribe();
     return () => void supabase.removeChannel(ch);
   }, [profile]);
 
-  async function classify(body: { text: string; file_name: string; file_type: string; file_size: number }) {
-    if (!body.text.trim()) return setError(t("scan.empty_document"));
-    if (body.text.length > MAX_CHARS) return setError(t("scan.too_large", { max: MAX_CHARS.toLocaleString() }));
-    setPhase("analyzing");
+  const update = (id: string, patch: Partial<Turn>) =>
+    setTurns((list) => list.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+
+  async function classify(id: string, body: { text: string; file_name: string; file_type: string; file_size: number }) {
+    if (!body.text.trim()) return update(id, { phase: "error", error: t("scan.empty_document") });
+    if (body.text.length > MAX_CHARS) {
+      return update(id, { phase: "error", error: t("scan.too_large", { max: MAX_CHARS.toLocaleString() }) });
+    }
+    update(id, { phase: "analyzing" });
     const sha256 = await sha256Hex(body.text);
-    const { data } = await callFunction<{ scan?: Scan; max_chars?: number }>("classify", { ...body, sha256 });
-    setPhase("idle");
+    const { data } = await callFunction<{ scan?: Scan }>("classify", { ...body, sha256 });
     if (!data.scan) {
       const code = data.error ?? "generic";
       const known = ["too_large", "empty_document", "account_not_active"];
-      return setError(known.includes(code) ? t(`scan.${code}`, { max: MAX_CHARS.toLocaleString() })
-        : t(`errors.${code}`, { defaultValue: t("errors.generic") }));
+      return update(id, {
+        phase: "error",
+        error: known.includes(code) ? t(`scan.${code}`, { max: MAX_CHARS.toLocaleString() })
+          : t(`errors.${code}`, { defaultValue: t("errors.generic") }),
+      });
     }
-    setResult(data.scan);
-    setText("");
-    setHistory((h) => (h ? [data.scan!, ...h] : h));
+    update(id, { phase: "done", scan: data.scan });
+    window.dispatchEvent(new Event(SCANS_CHANGED));
   }
 
-  async function onFile(file: File | undefined) {
-    if (!file) return;
-    setError(null);
-    setResult(null);
-    setPhase("extracting");
+  function onText(text: string) {
+    const id = crypto.randomUUID();
+    const label = text.length > 280 ? `${text.slice(0, 280)}…` : text;
+    setTurns((list) => [...list, { id, label, isFile: false, phase: "analyzing" }]);
+    void classify(id, { text, file_name: "text.txt", file_type: "text/plain", file_size: text.length });
+  }
+
+  async function onFile(file: File) {
+    const id = crypto.randomUUID();
+    setTurns((list) => [...list, { id, label: file.name, isFile: true, phase: "extracting" }]);
     try {
       const content = await extractText(file);
-      await classify({ text: content, file_name: file.name, file_type: file.type, file_size: file.size });
+      await classify(id, { text: content, file_name: file.name, file_type: file.type, file_size: file.size });
     } catch (e) {
-      setPhase("idle");
-      setError(e instanceof ExtractError ? t(`scan.${e.message}`) : t("scan.unsupported"));
-    } finally {
-      if (input.current) input.current.value = "";
+      update(id, { phase: "error", error: e instanceof ExtractError ? t(`scan.${e.message}`) : t("scan.unsupported") });
     }
-  }
-
-  function onDrop(e: DragEvent) {
-    e.preventDefault();
-    setDrag(false);
-    void onFile(e.dataTransfer.files[0]);
   }
 
   async function finishTour() {
@@ -106,81 +105,42 @@ export default function Scans() {
     }
   }
 
-  const busy = phase !== "idle";
+  const composer = <Composer onText={onText} onFile={onFile} busy={busy} autoFocus />;
 
   return (
-    <div className="page">
-      <header className="page-head"><h1>{t("scan.title")}</h1></header>
-
-      <div className="card upload" data-tour="upload">
-        <Segmented label={t("scan.title")} value={mode} onChange={setMode}
-          options={[{ value: "file", label: t("scan.fileTab") }, { value: "text", label: t("scan.textTab") }]} />
-        {mode === "file" ? (
-          <div className={`dropzone${drag ? " drag" : ""}${busy ? " busy" : ""}`}
-            onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop}
-            onClick={() => !busy && input.current?.click()} role="button" tabIndex={0}
-            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && input.current?.click()}>
-            <div className="dropzone-icon"><IconUpload /></div>
-            <b>{busy ? t(`scan.${phase}`) : t("scan.dropTitle")}</b>
-            <span className="muted small">{t("scan.formats")}</span>
-            <input ref={input} type="file" hidden
-              accept=".pdf,.docx,.txt,.csv,.md,.json,.log,.xml,.tsv,.yml,.yaml,text/*,application/pdf"
-              onChange={(e) => void onFile(e.target.files?.[0])} />
-          </div>
-        ) : (
-          <div className="stack">
-            <textarea className="paste" value={text} onChange={(e) => setText(e.target.value)} rows={8}
-              placeholder={t("scan.pastePlaceholder")} aria-label={t("scan.pastePlaceholder")} disabled={busy} />
-            <Button block loading={busy} disabled={!text.trim()}
-              onClick={() => void classify({ text, file_name: "text.txt", file_type: "text/plain", file_size: text.length })}>
-              {t("scan.analyze")}
-            </Button>
-          </div>
-        )}
-        {busy && <div className="progress" aria-hidden="true"><span /></div>}
-        {error && <p className="form-error" role="alert">{error}</p>}
-      </div>
-
-      {result && <ScanResult scan={result} onChange={(s) => {
-        setResult(s);
-        setHistory((h) => h?.map((x) => (x.id === s.id ? s : x)) ?? h);
-      }} />}
-
-      <section className="history" data-tour="history">
-        <div className="section-head">
-          <h2>{t("scan.history")}</h2>
+    <div className={`chat${turns.length ? "" : " empty"}`}>
+      {turns.length === 0 ? (
+        <div className="hero-center">
+          <h1 className="hero-title">{t("scan.heroTitle")}</h1>
+          {composer}
+          <p className="composer-hint">{t("scan.formats")}</p>
         </div>
-        <div className="filters">
-          {FILTERS.map((f) => (
-            <button key={f} type="button" className={`chip-btn${filter === f ? " active" : ""}`} onClick={() => setFilter(f)}>
-              {f === "all" ? t("common.all") : t(`review.${f}`)}
-            </button>
-          ))}
-        </div>
-        {historyError ? <ErrorState onRetry={load} />
-          : history === null ? <LoadingState />
-          : history.length === 0 ? <EmptyState icon={<IconDoc />} text={t("scan.noHistory")} />
-          : (
-            <ul className="list card">
-              {history.map((s) => (
-                <li key={s.id}>
-                  <Link to={`/app/scans/${s.id}`} className="list-row scan-row">
-                    <div className="list-main">
-                      <b className="truncate">{s.file_name}</b>
-                      <span className="muted small">{fmtDateTime(s.created_at)}</span>
-                    </div>
-                    <div className="row gap-sm">
-                      <ReviewBadge status={s.review_status} />
-                      <LevelBadge level={s.final_level} />
-                      <IconChevron className="muted" />
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-      </section>
-
+      ) : (
+        <>
+          <div className="thread">
+            {turns.map((x) => (
+              <div key={x.id} className="turn">
+                <div className="bubble-user">
+                  {x.isFile && <IconDoc />}
+                  <span>{x.label}</span>
+                </div>
+                {(x.phase === "extracting" || x.phase === "analyzing") && (
+                  <div className="thinking"><Spinner small /> {t(`scan.${x.phase}`)}</div>
+                )}
+                {x.phase === "error" && <p className="form-error" role="alert">{x.error}</p>}
+                {x.scan && (
+                  <ScanResult scan={x.scan} onChange={(s) => update(x.id, { scan: s })} />
+                )}
+              </div>
+            ))}
+            <div ref={bottom} />
+          </div>
+          <div className="composer-dock">
+            {composer}
+            <p className="composer-hint">{t("scan.formats")}</p>
+          </div>
+        </>
+      )}
       {showTour && <Tour onFinish={finishTour} />}
     </div>
   );

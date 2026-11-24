@@ -22,7 +22,11 @@
     "notifications": "Notifications",
     "profile": "Profile",
     "settings": "Settings",
-    "admin": "Admin"
+    "admin": "Admin",
+    "newScan": "New check",
+    "history": "History",
+    "allHistory": "All history",
+    "menu": "Menu"
   },
   "landing": {
     "title": "Know what is confidential before it leaks",
@@ -36,7 +40,10 @@
     "f3t": "Nothing is stored",
     "f3": "Document text is never saved. Sensitive values are masked before the AI sees them.",
     "f4t": "Human in the loop",
-    "f4": "Confirm or dispute any verdict. Admins review disputes and set policy rules."
+    "f4": "Confirm or dispute any verdict. Admins review disputes and set policy rules.",
+    "signupFree": "Sign up for free",
+    "composerPlaceholder": "Paste a document to check",
+    "footer": "Senim is AI. Document text is never stored. By using it you agree to the terms."
   },
   "levels": {
     "public": "Public",
@@ -147,7 +154,13 @@
     "deleteConfirm": "Delete this record?",
     "chars": "{{count}} characters",
     "notFound": "Record not found",
-    "openAll": "All documents"
+    "openAll": "All documents",
+    "heroTitle": "Which document should we check?",
+    "composerPlaceholder": "Paste text or attach a file",
+    "attach": "Attach file",
+    "send": "Check",
+    "dropHere": "Drop the file here",
+    "you": "You"
   },
   "findingTypes": {
     "iin": "IIN",
