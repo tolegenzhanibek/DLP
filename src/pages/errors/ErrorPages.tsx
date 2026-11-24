@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate } from "react-router-dom";
-import { IconLock, IconShield } from "../../components/icons";
+import { IconLock } from "../../components/icons";
 import { Button } from "../../components/ui";
 import { AuthCard } from "../auth/AuthCard";
 import { useAuth } from "../../lib/auth";
@@ -36,23 +35,7 @@ export function Blocked() {
   );
 }
 
+/** Sign-ups are no longer approved manually; old links land in the app. */
 export function Pending() {
-  const { t } = useTranslation();
-  const { profile, session, refreshProfile, signOut } = useAuth();
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    const id = window.setInterval(() => void refreshProfile(), 30_000);
-    return () => window.clearInterval(id);
-  }, [refreshProfile]);
-  if (!session) return <Navigate to="/login" replace />;
-  if (profile?.status === "active") return <Navigate to="/app" replace />;
-  if (profile?.status === "blocked") return <Navigate to="/blocked" replace />;
-  return (
-    <Shell icon={<IconShield />} title={t("pages.pendingTitle")} text={t("pages.pendingText")}>
-      <Button block loading={busy} className="btn-dark btn-pill btn-tall" onClick={async () => { setBusy(true); await refreshProfile(); setBusy(false); }}>
-        {t("pages.refresh")}
-      </Button>
-      <Button variant="ghost" block onClick={signOut} className="btn-pill">{t("settings.signOut")}</Button>
-    </Shell>
-  );
+  return <Navigate to="/app" replace />;
 }

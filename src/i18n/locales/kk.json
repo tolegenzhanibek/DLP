@@ -314,7 +314,10 @@
     "enabled": "Қосулы",
     "noRules": "Әзірге ереже жоқ",
     "deleteRule": "Бұл ережені жоясыз ба?",
-    "usersActive": "Белсенді"
+    "usersActive": "Белсенді",
+    "usersNew7d": "Жаңа (7 күн)",
+    "usersActive7d": "Белсенді (7 күн)",
+    "signups14d": "Тіркелулер, соңғы 14 күн"
   },
   "pages": {
     "notFoundTitle": "Бет табылмады",
