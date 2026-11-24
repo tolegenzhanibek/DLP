@@ -12,7 +12,7 @@ let current: Theme = (() => {
 function apply() {
   const dark = current === "dark" || (current === "system" && media.matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#0b1020" : "#f6f7fb");
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? "#212121" : "#ffffff");
 }
 
 media.addEventListener("change", apply);

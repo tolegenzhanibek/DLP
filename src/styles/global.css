@@ -1,4 +1,4 @@
-/* Senim design tokens. One font family, brand #4F46E5, radii 14–20px, soft shadows. */
+/* Senim design tokens. Monochrome (black & white), radii 14–24px, one font family. */
 :root {
   --brand: #4f46e5;
   --brand-600: #4338ca;
@@ -546,3 +546,67 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 .spark-col { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
 .spark-bar { width: 100%; min-height: 3px; border-radius: 6px 6px 2px 2px; background: var(--brand); opacity: 0.85; }
 .spark-n { font-size: 11px; color: var(--muted); min-height: 14px; }
+
+/* =====================================================================
+   Monochrome: the whole site is black & white only.
+   Sensitivity levels differ by grey intensity (light grey -> black).
+   ===================================================================== */
+:root {
+  --brand: #0d0d0d; --brand-600: #000000; --brand-soft: #ececec;
+  --danger: #0d0d0d; --ok: #0d0d0d;
+  /* solid tone (dots, bars, meter, card edge) */
+  --lv-public: #c8c8c8; --lv-internal: #8f8f8f; --lv-confidential: #4a4a4a; --lv-restricted: #0d0d0d;
+  /* badge text / background */
+  --lv-public-fg: #555555; --lv-public-bg: #f2f2f2;
+  --lv-internal-fg: #2b2b2b; --lv-internal-bg: #dedede;
+  --lv-confidential-fg: #ffffff; --lv-confidential-bg: #5a5a5a;
+  --lv-restricted-fg: #ffffff; --lv-restricted-bg: #0d0d0d;
+}
+:root[data-theme="dark"] {
+  --brand: #ececec; --brand-600: #ffffff; --brand-soft: #333333;
+  --danger: #ececec; --ok: #ececec;
+  --lv-public: #4a4a4a; --lv-internal: #7a7a7a; --lv-confidential: #b5b5b5; --lv-restricted: #f5f5f5;
+  --lv-public-fg: #b0b0b0; --lv-public-bg: #2c2c2c;
+  --lv-internal-fg: #e0e0e0; --lv-internal-bg: #444444;
+  --lv-confidential-fg: #1a1a1a; --lv-confidential-bg: #a8a8a8;
+  --lv-restricted-fg: #0d0d0d; --lv-restricted-bg: #f5f5f5;
+}
+.level-public { color: var(--lv-public-fg); background: var(--lv-public-bg); }
+.level-internal { color: var(--lv-internal-fg); background: var(--lv-internal-bg); }
+.level-confidential { color: var(--lv-confidential-fg); background: var(--lv-confidential-bg); }
+.level-restricted { color: var(--lv-restricted-fg); background: var(--lv-restricted-bg); }
+.review, .review-confirmed, .review-disputed, .review-rejected { color: var(--muted); background: var(--surface-2); }
+.review-confirmed { color: var(--text); }
+.review-rejected { text-decoration: line-through; }
+.chip-btn.active { background: var(--text); border-color: var(--text); color: var(--bg); }
+.toast-error { background: var(--text); color: var(--bg); }
+.nav-badge { background: var(--text); color: var(--bg); }
+.online-dot { background: var(--text); }
+.online { color: var(--text); }
+.field-error, .form-error, .danger-text, .state-error { color: var(--text) !important; font-weight: 600; }
+.field-control.has-error { border-color: var(--text); }
+.form-info { color: var(--text); }
+.hint.ok, .hint.bad { color: var(--text); }
+.input-status.ok { background: var(--text); color: var(--bg); }
+.input-status.bad { background: transparent; color: var(--text); border: 1.5px solid var(--text); }
+.feature-chip svg, .dropzone-icon, .state-icon, .feature-icon { color: var(--text); }
+.state-icon, .dropzone-icon, .feature-icon { background: var(--surface-2); }
+.avatar-fallback { background: var(--surface-2); color: var(--text); }
+.spark-bar { background: var(--text); opacity: 1; }
+a { color: var(--text); }
+.link-btn { color: var(--text); }
+.toggle.on { background: var(--text); }
+.composer.drag { border-color: var(--text); box-shadow: 0 0 0 4px var(--brand-soft); }
+.pill-input:focus { border-color: var(--text); box-shadow: 0 0 0 4px var(--brand-soft); }
+.field-control:focus-within { border-color: var(--text); box-shadow: 0 0 0 4px var(--brand-soft); }
+
+/* settings: one card, rows separated by thin dividers */
+.settings-card { padding: 4px 20px; display: flex; flex-direction: column; }
+.settings-card > * + * { border-top: 1px solid var(--border); }
+.settings-card .setting { padding: 18px 0; display: flex; flex-direction: column; gap: 10px; font-weight: 700; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 16px 0; background: none; border: 0; border-top: 1px solid var(--border); text-align: left; font-size: 15px; color: var(--text); cursor: pointer; }
+.settings-card > .setting-row:first-child { border-top: 0; }
+.setting-row:hover { opacity: 0.7; }
+.session-list { display: flex; flex-direction: column; font-weight: 400; }
+.session-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.session-others { align-self: flex-start; padding-left: 0; font-weight: 600; }
