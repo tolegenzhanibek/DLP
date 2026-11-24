@@ -36,10 +36,10 @@ export default function ForgotPassword() {
   return (
     <AuthCard title={t("auth.forgotTitle")} footer={<Link to="/login">{t("auth.toLogin")}</Link>}>
       {sent ? (
-        <p className="form-info" role="status">{t("auth.linkSent")}</p>
+        <p className="auth-sub" role="status">{t("auth.linkSent")}</p>
       ) : (
         <form onSubmit={submit} noValidate className="stack">
-          <Field label={t("auth.email")} type="email" value={email} autoComplete="email" inputMode="email"
+          <Field label={t("auth.email")} hideLabel type="email" value={email} autoComplete="email" inputMode="email"
             onChange={(e) => setEmail(e.target.value)} />
           <Captcha ref={captcha} onToken={setToken} />
           {error && <p className="form-error" role="alert">{error}</p>}

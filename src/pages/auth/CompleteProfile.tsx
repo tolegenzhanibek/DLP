@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button, Field, LoadingState } from "../../components/ui";
+import { Button, Field, InputStatus, LoadingState } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
 import { NICK_RE } from "../../lib/format";
@@ -54,20 +54,19 @@ export default function CompleteProfile() {
     nav("/app", { replace: true });
   }
 
-  const nickStatus =
-    nick === "free" ? <span className="hint ok">{t("auth.nicknameFree")}</span>
-    : nick === "taken" ? <span className="hint bad">{t("auth.nicknameTaken")}</span>
-    : nick === "checking" ? <span className="hint">…</span>
-    : null;
+  const nickIcon = (
+    <InputStatus label={nick === "free" ? t("auth.nicknameFree") : t("auth.nicknameTaken")}
+      state={nick === "checking" ? "checking" : nick === "free" ? "ok" : nick === "taken" || nick === "invalid" ? "bad" : null} />
+  );
+  const nickError = nick === "invalid" ? t("auth.nicknameInvalid") : nick === "taken" ? t("errors.nickname_taken") : null;
 
   return (
     <AuthCard title={t("auth.completeTitle")}
       footer={<button type="button" className="link-btn" onClick={signOut}>{t("settings.signOut")}</button>}>
-      <p className="muted">{t("auth.completeText")}</p>
+      <p className="auth-sub">{t("auth.completeText")}</p>
       <form onSubmit={submit} noValidate className="stack">
-        <Field label={t("auth.nickname")} value={nickname} autoComplete="username" autoCapitalize="off" maxLength={24}
-          onChange={(e) => setNickname(e.target.value)} status={nickStatus}
-          error={nick === "invalid" ? t("auth.nicknameInvalid") : null} />
+        <Field label={t("auth.nickname")} hideLabel value={nickname} autoComplete="username" autoCapitalize="off" maxLength={24}
+          onChange={(e) => setNickname(e.target.value)} status={nickIcon} error={nickError} autoFocus />
         {error && <p className="form-error" role="alert">{error}</p>}
         <Button type="submit" block loading={busy}>{t("auth.completeCta")}</Button>
       </form>

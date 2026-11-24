@@ -3,7 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { AuthModal } from "../components/AuthModal";
 import { Composer } from "../components/Composer";
 import { IconLock, IconShieldCheck, IconSparkle, IconUsers } from "../components/icons";
-import { LanguageSwitch } from "../components/LanguageSwitch";
+import { LanguageMenu } from "../components/LanguageMenu";
 import { Logo } from "../components/ui";
 import { useAuth } from "../lib/auth";
 
@@ -26,7 +26,7 @@ export default function Landing({ auth = false }: { auth?: boolean }) {
       <header className="landing-head">
         <Logo />
         <div className="row gap-sm">
-          <LanguageSwitch />
+          <LanguageMenu />
           <Link to="/login" className="btn btn-dark btn-pill">{t("landing.login")}</Link>
           <Link to="/signup" className="btn btn-outline btn-pill hide-xs">{t("landing.signupFree")}</Link>
         </div>
@@ -40,7 +40,7 @@ export default function Landing({ auth = false }: { auth?: boolean }) {
             <span key={f.title} className="feature-chip">{f.icon}{f.title}</span>
           ))}
         </div>
-        <Link to="/signup" className="btn btn-primary btn-pill show-xs">{t("landing.signupFree")}</Link>
+        <Link to="/signup" className="btn btn-dark btn-pill btn-tall show-xs">{t("landing.signupFree")}</Link>
       </section>
       <footer className="landing-foot">{t("landing.footer")}</footer>
       {auth && <AuthModal onClose={() => nav("/", { replace: true })} />}

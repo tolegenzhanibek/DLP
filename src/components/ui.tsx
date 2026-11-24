@@ -5,7 +5,7 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type { Level, ReviewStatus } from "../lib/types";
-import { IconEye, IconEyeOff, IconShield } from "./icons";
+import { IconCheck, IconEye, IconEyeOff, IconShield, IconX } from "./icons";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -31,28 +31,43 @@ export function Spinner({ small }: { small?: boolean }) {
 interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string | null;
+  /** Small status icon shown inside the field, on the right (see InputStatus). */
   status?: ReactNode;
   trailing?: ReactNode;
+  /** Visually hide the label (it stays for screen readers) and use it as placeholder. */
+  hideLabel?: boolean;
 }
 
 export const Field = forwardRef<HTMLInputElement, FieldProps>(function Field(
-  { label, error, status, trailing, className = "", ...rest }, ref,
+  { label, error, status, trailing, hideLabel, className = "", placeholder, ...rest }, ref,
 ) {
   const id = useId();
   return (
     <div className={`field ${className}`}>
-      <label htmlFor={id} className="field-label">
+      <label htmlFor={id} className={hideLabel ? "sr-only" : "field-label"}>
         <span>{label}</span>
-        {status}
       </label>
       <div className={`field-control${error ? " has-error" : ""}`}>
-        <input ref={ref} id={id} aria-invalid={Boolean(error) || undefined} {...rest} />
+        <input ref={ref} id={id} aria-invalid={Boolean(error) || undefined}
+          placeholder={placeholder ?? (hideLabel ? label : undefined)} {...rest} />
+        {status && <span className="field-status">{status}</span>}
         {trailing}
       </div>
       {error && <p className="field-error" role="alert">{error}</p>}
     </div>
   );
 });
+
+/** Live-check indicator inside an input: spinner, green check or red cross. */
+export function InputStatus({ state, label }: { state: "checking" | "ok" | "bad" | null; label?: string }) {
+  if (!state) return null;
+  if (state === "checking") return <Spinner small />;
+  return (
+    <span className={`input-status ${state}`} role="img" aria-label={label}>
+      {state === "ok" ? <IconCheck /> : <IconX />}
+    </span>
+  );
+}
 
 export function TextArea({ label, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement> & { label: string }) {
   const id = useId();
