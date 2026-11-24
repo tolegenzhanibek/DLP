@@ -255,13 +255,6 @@
   },
   "admin": {
     "title": "Әкімші",
-    "enrollTitle": "Екі факторлы қорғанысты баптау",
-    "enrollText": "QR кодты authenticator қосымшасымен сканерлеп, 6 таңбалы кодты енгізіңіз.",
-    "secret": "Кілт",
-    "mfaTitle": "Authenticator коды",
-    "code": "6 таңбалы код",
-    "verify": "Тексеру",
-    "invalidCode": "Код қате",
     "overview": "Шолу",
     "users": "Қолданушылар",
     "reviews": "Даулар",

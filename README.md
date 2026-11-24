@@ -20,7 +20,7 @@ Prompt injection AI деңгейін ереже тапқан деңгейден 
 
 ## Стек
 
-React, Vite, TypeScript, React Router, i18next (kk/ru/en) · Supabase (Postgres, RLS, Auth+TOTP, Storage, Realtime, Edge Functions, Vault, pg_net) · Resend SMTP · Cloudflare Turnstile · Vercel · PWA және Web Push · Claude API.
+React, Vite, TypeScript, React Router, i18next (kk/ru/en) · Supabase (Postgres, RLS, Auth, Storage, Realtime, Edge Functions, Vault, pg_net) · Resend SMTP · Cloudflare Turnstile · Vercel · PWA және Web Push · Claude API.
 
 ## Құрылымы
 
@@ -38,7 +38,7 @@ docs/SETUP.md             іске қосу нұсқаулығы
 
 - RLS барлық кестеде қосулы. Клиент кестеге тікелей жаза алмайды: әр өзгеріс `auth.uid()` тексеретін `security definer` функциясы арқылы өтеді.
 - Профильдің жеке бағандары (телефон, почта, қала, жыныс) таблица деңгейінде жабық. Иесі оларды тек `my_profile()` арқылы оқиды.
-- Әкімшінің әр RPC-і `role = admin` **және** `aal2` (TOTP) талап етеді.
+- Әкімшінің әр RPC-і `role = admin` талап етеді (тексеріс базаның өзінде).
 - Әкімші ережелері тек кілт сөзден тұрады. Regex қолданылмайды, себебі ол ReDoS тәуекелін тудырады.
 - Rate limit қойылған: кіру (IP және логин бойынша), құпиясөзді тексеру және жіктеу.
 - Кілттер тек `supabase secrets` пен Vault-та сақталады. `service_role` клиентте ешқашан қолданылмайды.

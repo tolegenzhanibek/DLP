@@ -50,7 +50,7 @@
    ```bash
    export RESEND_API_KEY=re_...          # тек терминалда, файлға жазбаңыз
    export TURNSTILE_SECRET_KEY=0x...
-   supabase config push                  # supabase/config.toml: SMTP, captcha, хат үлгілері, TOTP
+   supabase config push                  # supabase/config.toml: SMTP, captcha, хат үлгілері
    ```
    Хат жіберуші `no-reply@senim.app`, аты «Senim». Хат үш тілде келеді, ал ондағы батырма `/confirm-email` немесе `/reset-password` бетін ашады.
 
@@ -114,9 +114,8 @@ select vault.create_secret('<Apps Script SHARED_SECRET-пен бірдей>', 's
    ```sql
    update public.profiles set role = 'admin', status = 'active' where nickname = '<сіздің никнейм>';
    ```
-3. «Әкімші» бөліміне кіргенде жүйе authenticator QR кодын көрсетеді (Google Authenticator, 1Password сияқты қосымшалар). Кейінгі әр кіруде 6 таңбалы код сұралады.
 
-Жаңа қолданушылар `pending` күйінде тіркеледі. Әкімші оларды «Қолданушылар» бөлімінде бекітеді.
+Жаңа қолданушылар тіркелген сәтте белсенді болады. Әкімші бөлімі қолданушылар аналитикасы мен бұғаттауға арналған.
 
 ## 9. Жергілікті әзірлеу
 

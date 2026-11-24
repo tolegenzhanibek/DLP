@@ -255,13 +255,6 @@
   },
   "admin": {
     "title": "Admin",
-    "enrollTitle": "Set up two-factor authentication",
-    "enrollText": "Scan the QR code with an authenticator app and enter the 6-digit code.",
-    "secret": "Key",
-    "mfaTitle": "Authenticator code",
-    "code": "6-digit code",
-    "verify": "Verify",
-    "invalidCode": "Invalid code",
     "overview": "Overview",
     "users": "Users",
     "reviews": "Disputes",

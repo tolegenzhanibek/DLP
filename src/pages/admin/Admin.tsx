@@ -1,8 +1,7 @@
-import QRCode from "qrcode";
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useSearchParams } from "react-router-dom";
-import { IconShield, IconUsers } from "../../components/icons";
+import { IconUsers } from "../../components/icons";
 import {
   Avatar, Button, EmptyState, ErrorState, Field, LevelBadge, LoadingState, Modal, ReviewBadge, Segmented, Select,
   TextArea, Toggle, toast,
@@ -15,78 +14,11 @@ import { LEVELS, type AccountStatus, type Finding, type Level, type ReviewStatus
 
 type Tab = "overview" | "users" | "reviews" | "rules";
 
-/** Admin area: requires role=admin AND a TOTP-verified session (aal2). The DB enforces the same. */
+/** Admin area: user analytics and moderation. Requires role = admin (enforced in the DB too). */
 export default function Admin() {
   const { profile } = useAuth();
-  const [aal, setAal] = useState<"checking" | "enroll" | "challenge" | "ok">("checking");
-
-  const check = useCallback(async () => {
-    const { data } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    if (data?.currentLevel === "aal2") return setAal("ok");
-    setAal(data?.nextLevel === "aal2" ? "challenge" : "enroll");
-  }, []);
-  useEffect(() => {
-    void check();
-  }, [check]);
-
   if (profile?.role !== "admin") return <Navigate to="/app" replace />;
-  if (aal === "checking") return <LoadingState />;
-  if (aal !== "ok") return <MfaGate mode={aal} onVerified={() => setAal("ok")} />;
   return <AdminPanel />;
-}
-
-function MfaGate({ mode, onVerified }: { mode: "enroll" | "challenge"; onVerified: () => void }) {
-  const { t } = useTranslation();
-  const [factorId, setFactorId] = useState<string | null>(null);
-  const [qr, setQr] = useState<string | null>(null);
-  const [secret, setSecret] = useState<string | null>(null);
-  const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void (async () => {
-      const { data: list } = await supabase.auth.mfa.listFactors();
-      const verified = list?.totp.find((f) => f.status === "verified");
-      if (mode === "challenge" && verified) return setFactorId(verified.id);
-      // Clean up half-finished enrolments, then enroll a fresh factor.
-      for (const f of list?.all ?? []) if (f.status === "unverified") await supabase.auth.mfa.unenroll({ factorId: f.id });
-      const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `Senim ${Date.now()}` });
-      if (error || !data?.totp) return setError(errorText(t, error));
-      setFactorId(data.id);
-      setSecret(data.totp.secret);
-      setQr(await QRCode.toDataURL(data.totp.uri, { margin: 1, width: 220 }));
-    })();
-  }, [mode, t]);
-
-  async function verify(e: FormEvent) {
-    e.preventDefault();
-    if (!factorId || !/^\d{6}$/.test(code)) return setError(t("admin.invalidCode"));
-    setBusy(true);
-    setError(null);
-    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code });
-    setBusy(false);
-    if (error) return setError(t("admin.invalidCode"));
-    onVerified();
-  }
-
-  return (
-    <div className="page narrow">
-      <div className="card stack center">
-        <div className="state-icon big"><IconShield /></div>
-        <h1>{mode === "enroll" ? t("admin.enrollTitle") : t("admin.mfaTitle")}</h1>
-        {mode === "enroll" && <p className="muted">{t("admin.enrollText")}</p>}
-        {qr && <img src={qr} alt="QR" width={220} height={220} className="qr" />}
-        {secret && <code className="secret">{t("admin.secret")}: {secret}</code>}
-        <form onSubmit={verify} className="stack full">
-          <Field label={t("admin.code")} value={code} inputMode="numeric" autoComplete="one-time-code" maxLength={6}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} />
-          {error && <p className="form-error" role="alert">{error}</p>}
-          <Button type="submit" block loading={busy} disabled={!factorId}>{t("admin.verify")}</Button>
-        </form>
-      </div>
-    </div>
-  );
 }
 
 function AdminPanel() {
