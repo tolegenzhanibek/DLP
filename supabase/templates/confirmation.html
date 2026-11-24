@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="kk">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Senim</title></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:32px 12px">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;box-shadow:0 4px 24px rgba(15,23,42,.06)">
+          <tr><td style="padding:32px 32px 24px">
+            <img src="{{ .SiteURL }}/logo.png" width="120" height="36" alt="Senim" style="display:block;border:0">
+          </td></tr>
+          <tr><td style="padding:0 32px 8px">
+            <h2 style="margin:0 0 8px;font-size:20px;line-height:28px;color:#0f172a;font-weight:800">Почтаңызды растаңыз</h2>
+            <p style="margin:0 0 20px;font-size:15px;line-height:24px;color:#475569">Senim-де тіркелгеніңізге рахмет. Аккаунтты белсендіру үшін төмендегі батырманы басыңыз.</p>
+            <a href="{{ .SiteURL }}/confirm-email?token_hash={{ .TokenHash }}&type=signup" style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:14px">Растау</a>
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 20px">
+          </td></tr>
+          <tr><td style="padding:0 32px 8px">
+            <h2 style="margin:0 0 8px;font-size:20px;line-height:28px;color:#0f172a;font-weight:800">Подтвердите почту</h2>
+            <p style="margin:0 0 20px;font-size:15px;line-height:24px;color:#475569">Спасибо за регистрацию в Senim. Нажмите кнопку ниже, чтобы активировать аккаунт.</p>
+            <a href="{{ .SiteURL }}/confirm-email?token_hash={{ .TokenHash }}&type=signup" style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:14px">Подтвердить</a>
+            <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0 20px">
+          </td></tr>
+          <tr><td style="padding:0 32px 32px">
+            <h2 style="margin:0 0 8px;font-size:20px;line-height:28px;color:#0f172a;font-weight:800">Confirm your email</h2>
+            <p style="margin:0 0 20px;font-size:15px;line-height:24px;color:#475569">Thanks for signing up for Senim. Press the button below to activate your account.</p>
+            <a href="{{ .SiteURL }}/confirm-email?token_hash={{ .TokenHash }}&type=signup" style="display:inline-block;background:#4F46E5;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 24px;border-radius:14px">Confirm</a>
+            
+          </td></tr>
+      </table>
+      <p style="margin:20px 0 0;font-size:13px"><a href="{{ .SiteURL }}" style="color:#64748b;text-decoration:none">senim.app</a></p>
+    </td></tr>
+  </table>
+</body>
+</html>

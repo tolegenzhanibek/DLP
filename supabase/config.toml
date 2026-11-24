@@ -1,0 +1,72 @@
+# Supabase project config. Push to the hosted project with:
+#   supabase link --project-ref <ref> && supabase config push && supabase db push
+# Secrets are referenced as env(...) and never stored here.
+project_id = "senim"
+
+[api]
+schemas = ["public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 500
+
+[auth]
+site_url = "https://senim.app"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+minimum_password_length = 8
+
+[auth.rate_limit]
+email_sent = 30
+sign_in_sign_ups = 30
+token_verifications = 30
+token_refresh = 150
+
+[auth.captcha]
+enabled = true
+provider = "turnstile"
+secret = "env(TURNSTILE_SECRET_KEY)"
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true
+double_confirm_changes = true
+secure_password_change = false
+max_frequency = "60s"
+
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "no-reply@senim.app"
+sender_name = "Senim"
+
+[auth.email.template.confirmation]
+subject = "Senim · Почтаны растаңыз / Подтвердите почту / Confirm your email"
+content_path = "./supabase/templates/confirmation.html"
+
+[auth.email.template.recovery]
+subject = "Senim · Құпиясөзді қалпына келтіру / Восстановление пароля / Reset password"
+content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.email_change]
+subject = "Senim · Жаңа почтаны растаңыз / Подтвердите новую почту / Confirm new email"
+content_path = "./supabase/templates/email_change.html"
+
+[auth.mfa]
+max_enrolled_factors = 10
+
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
+[functions.login]
+verify_jwt = false
+
+[functions.classify]
+verify_jwt = true
+
+[functions.send-push]
+verify_jwt = false
