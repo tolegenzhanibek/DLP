@@ -21,9 +21,10 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
   const { profile, unread } = useAuth();
   const nav = useNavigate();
   const [recent, setRecent] = useState<RecentScan[] | null>(null);
+  const isAdmin = profile?.role === "admin";
 
   const load = useCallback(async () => {
-    if (!profile) return;
+    if (!profile || profile.role === "admin") return;
     const { data } = await supabase
       .from("scans")
       .select("id,file_name,final_level")
@@ -39,23 +40,27 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
     return () => window.removeEventListener(SCANS_CHANGED, load);
   }, [load]);
 
-  const items = [
-    { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
-    { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history" },
-    ...(profile?.role === "admin" ? [{ to: "/admin", label: t("nav.admin"), icon: <IconShield />, tour: "nav-admin" }] : []),
-  ];
+  // The admin account is for analytics only: no document tools, no history.
+  const items = isAdmin
+    ? [{ to: "/admin", label: t("nav.admin"), icon: <IconShield />, tour: "nav-admin", badge: 0 }]
+    : [
+        { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
+        { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history", badge: 0 },
+      ];
   const name = profile?.display_name || profile?.nickname || "";
 
   return (
     <>
       <div className="side-top">
-        <Link to="/app" className="side-logo" onClick={onNavigate} aria-label="Senim"><Logo size={26} /></Link>
+        <Link to={isAdmin ? "/admin" : "/app"} className="side-logo" onClick={onNavigate} aria-label="Senim"><Logo size={26} /></Link>
       </div>
       <nav className="side-nav" aria-label="main">
-        <button type="button" className="side-item" data-tour="nav-scans"
-          onClick={() => { onNavigate(); nav("/app", { state: { fresh: Date.now() } }); }}>
-          <IconEdit /><span>{t("nav.newScan")}</span>
-        </button>
+        {!isAdmin && (
+          <button type="button" className="side-item" data-tour="nav-scans"
+            onClick={() => { onNavigate(); nav("/app", { state: { fresh: Date.now() } }); }}>
+            <IconEdit /><span>{t("nav.newScan")}</span>
+          </button>
+        )}
         {items.map((it) => (
           <NavLink key={it.to} to={it.to} className="side-item" data-tour={it.tour} onClick={onNavigate}>
             <span className="side-icon">
@@ -66,6 +71,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
           </NavLink>
         ))}
       </nav>
+      {isAdmin ? <div className="side-spacer" /> : (
       <div className="side-section" data-tour="history">
         <div className="side-label">{t("nav.history")}</div>
         {recent === null ? null : recent.length === 0 ? (
@@ -80,6 +86,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
           ))
         )}
       </div>
+      )}
       <div className="side-bottom">
         <Link to="/profile" className="side-user" onClick={onNavigate}>
           <Avatar url={profile?.avatar_url} name={name} size={32} />
@@ -97,6 +104,8 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
 /** ChatGPT-style shell: same items everywhere; sidebar on desktop, drawer on mobile. */
 export function AppShell() {
   const { t } = useTranslation();
+  const { profile } = useAuth();
+  const isAdmin = profile?.role === "admin";
   const loc = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false); // mobile drawer
@@ -133,11 +142,13 @@ export function AppShell() {
             onClick={() => (window.innerWidth < 768 ? setOpen(true) : setCollapsed(false))}>
             {collapsed ? <IconSidebar /> : <IconMenu />}
           </button>
-          <Link to="/app" className="topbar-logo mobile-only"><Logo size={22} /></Link>
-          <button type="button" className="icon-btn mobile-only" aria-label={t("nav.newScan")}
-            onClick={() => nav("/app", { state: { fresh: Date.now() } })}>
-            <IconEdit />
-          </button>
+          <Link to={isAdmin ? "/admin" : "/app"} className="topbar-logo mobile-only"><Logo size={22} /></Link>
+          {isAdmin ? <span className="icon-btn mobile-only" aria-hidden="true" /> : (
+            <button type="button" className="icon-btn mobile-only" aria-label={t("nav.newScan")}
+              onClick={() => nav("/app", { state: { fresh: Date.now() } })}>
+              <IconEdit />
+            </button>
+          )}
         </header>
         <main className="main">
           <Outlet />
@@ -145,6 +156,13 @@ export function AppShell() {
       </div>
     </div>
   );
+}
+
+/** User-only pages (documents, history, notifications): the admin account goes to analytics. */
+export function UserOnly() {
+  const { profile } = useAuth();
+  if (profile?.role === "admin") return <Navigate to="/admin" replace />;
+  return <Outlet />;
 }
 
 export function PublicShell() {
