@@ -49,9 +49,9 @@ export default function ResetPassword() {
       {phase === "form" && (
         <form onSubmit={submit} noValidate className="stack">
           {/* New password and its confirmation share ONE eye toggle. */}
-          <PasswordField label={t("auth.newPassword")} value={password} autoComplete="new-password"
+          <PasswordField label={t("auth.newPassword")} hideLabel value={password} autoComplete="new-password"
             onChange={(e) => setPassword(e.target.value)} visible={show} onToggle={() => setShow(!show)} />
-          <PasswordField label={t("auth.passwordConfirm")} value={confirm} autoComplete="new-password"
+          <PasswordField label={t("auth.passwordConfirm")} hideLabel value={confirm} autoComplete="new-password"
             onChange={(e) => setConfirm(e.target.value)} visible={show} onToggle={() => setShow(!show)} showEye={false} />
           {error && <p className="form-error" role="alert">{error}</p>}
           <Button type="submit" block loading={busy}>{t("auth.setPassword")}</Button>

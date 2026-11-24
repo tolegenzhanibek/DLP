@@ -30,13 +30,12 @@ export default function CheckEmail() {
   }
 
   return (
-    <AuthCard title={t("auth.checkEmailTitle")} footer={<Link to="/login">{t("auth.toLogin")}</Link>}>
-      <div className="stack center">
-        <div className="state-icon big"><IconMail /></div>
-        <p className="muted">{t("auth.checkEmailText", { email })}</p>
+    <AuthCard title={t("auth.checkEmailTitle")} icon={<IconMail />} footer={<Link to="/login">{t("auth.toLogin")}</Link>}>
+      <div className="stack-sm">
+        <p className="auth-sub">{t("auth.checkEmailText", { email })}</p>
         <Captcha ref={captcha} onToken={setToken} />
         {msg && <p className={msg.ok ? "form-info" : "form-error"} role="status">{msg.text}</p>}
-        <Button variant="secondary" block loading={busy} onClick={resend}>{t("auth.resend")}</Button>
+        <Button variant="secondary" block loading={busy} onClick={resend} className="btn-outline btn-pill btn-tall">{t("auth.resend")}</Button>
       </div>
     </AuthCard>
   );

@@ -8,7 +8,7 @@ import { callFunction, SITE_URL, supabase } from "../lib/supabase";
 import { Captcha, captchaRequired, type CaptchaHandle } from "./Captcha";
 import { IconX } from "./icons";
 import { OAuthButtons } from "./OAuthButtons";
-import { Button, Field, PasswordField } from "./ui";
+import { Button, Field, InputStatus, PasswordField } from "./ui";
 
 type Step = "start" | "password" | "signup";
 type NickState = "idle" | "checking" | "free" | "taken" | "invalid";
@@ -131,11 +131,11 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
     nav("/check-email", { state: { email } });
   }
 
-  const nickStatus =
-    nick === "free" ? <span className="hint ok">{t("auth.nicknameFree")}</span>
-    : nick === "taken" ? <span className="hint bad">{t("auth.nicknameTaken")}</span>
-    : nick === "checking" ? <span className="hint">…</span>
-    : null;
+  const nickIcon = (
+    <InputStatus label={nick === "free" ? t("auth.nicknameFree") : t("auth.nicknameTaken")}
+      state={nick === "checking" ? "checking" : nick === "free" ? "ok" : nick === "taken" || nick === "invalid" ? "bad" : null} />
+  );
+  const nickError = nick === "invalid" ? t("auth.nicknameInvalid") : nick === "taken" ? t("errors.nickname_taken") : null;
 
   const idChip = (
     <div className="id-chip">
@@ -171,7 +171,7 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
             <h2 id="auth-title">{t("auth.enterPassword")}</h2>
             {idChip}
             <form onSubmit={login} noValidate className="stack-sm">
-              <PasswordField label={t("auth.password")} value={password} autoComplete="current-password" autoFocus
+              <PasswordField label={t("auth.password")} hideLabel value={password} autoComplete="current-password" autoFocus
                 onChange={(e) => setPassword(e.target.value)} visible={show} onToggle={() => setShow(!show)} />
               <div className="row end"><Link to="/forgot-password" className="small">{t("auth.forgot")}</Link></div>
               <Captcha ref={captcha} onToken={setToken} />
@@ -187,10 +187,9 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
             <h2 id="auth-title">{t("auth.createAccount")}</h2>
             {idChip}
             <form onSubmit={signup} noValidate className="stack-sm">
-              <Field label={t("auth.nickname")} value={nickname} autoComplete="username" autoCapitalize="off" maxLength={24}
-                onChange={(e) => setNickname(e.target.value)} status={nickStatus} autoFocus
-                error={nick === "invalid" ? t("auth.nicknameInvalid") : null} />
-              <PasswordField label={t("auth.password")} value={password} autoComplete="new-password"
+              <Field label={t("auth.nickname")} hideLabel value={nickname} autoComplete="username" autoCapitalize="off"
+                maxLength={24} onChange={(e) => setNickname(e.target.value)} status={nickIcon} autoFocus error={nickError} />
+              <PasswordField label={t("auth.password")} hideLabel value={password} autoComplete="new-password"
                 onChange={(e) => setPassword(e.target.value)} visible={show} onToggle={() => setShow(!show)}
                 error={touched ? pwErr : null} />
               <Captcha ref={captcha} onToken={setToken} />

@@ -42,3 +42,5 @@ export const IconMenu = base("M4 6h16M4 12h16M4 18h16");
 export const IconSidebar = base("M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 3v18");
 export const IconArrowUp = base("M12 19V5M5 12l7-7 7 7");
 export const IconHistory = base("M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 3");
+export const IconGlobe = base("M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z");
+export const IconChevronDown = base("m6 9 6 6 6-6");
