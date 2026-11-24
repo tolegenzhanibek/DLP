@@ -4,7 +4,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import type { Level } from "../lib/types";
-import { IconBell, IconEdit, IconHistory, IconMenu, IconSettings, IconShield, IconSidebar, IconUser } from "./icons";
+import { IconBell, IconEdit, IconHistory, IconMenu, IconSettings, IconShield, IconSidebar } from "./icons";
 import { Avatar, LoadingState, Logo } from "./ui";
 
 interface RecentScan {
@@ -42,7 +42,6 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
   const items = [
     { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
     { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history" },
-    { to: "/profile", label: t("nav.profile"), icon: <IconUser />, tour: "nav-profile" },
     { to: "/settings", label: t("nav.settings"), icon: <IconSettings />, tour: "nav-settings" },
     ...(profile?.role === "admin" ? [{ to: "/admin", label: t("nav.admin"), icon: <IconShield />, tour: "nav-admin" }] : []),
   ];
