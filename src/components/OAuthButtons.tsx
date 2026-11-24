@@ -14,30 +14,50 @@ function GoogleIcon() {
   );
 }
 
+function GitHubIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+      <path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2.1c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z" />
+    </svg>
+  );
+}
+
+type Provider = "google" | "github";
+const PROVIDERS: { id: Provider; label: string; icon: () => React.JSX.Element }[] = [
+  { id: "google", label: "auth.google", icon: GoogleIcon },
+  { id: "github", label: "auth.github", icon: GitHubIcon },
+];
+
 /** Social sign-in. Same buttons on the login and signup pages. */
 export function OAuthButtons() {
   const { t } = useTranslation();
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<Provider | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function google() {
-    setBusy(true);
+  async function signIn(provider: Provider) {
+    setBusy(provider);
     setError(null);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${SITE_URL}/auth/callback`, queryParams: { prompt: "select_account" } },
+      provider,
+      options: {
+        redirectTo: `${SITE_URL}/auth/callback`,
+        ...(provider === "google" ? { queryParams: { prompt: "select_account" } } : {}),
+      },
     });
     if (error) {
-      setBusy(false);
+      setBusy(null);
       setError(errorText(t, error));
     }
   }
 
   return (
     <div className="stack-sm">
-      <button type="button" className="btn btn-secondary btn-block oauth-btn" onClick={google} disabled={busy}>
-        <GoogleIcon /> {t("auth.google")}
-      </button>
+      {PROVIDERS.map(({ id, label, icon: Icon }) => (
+        <button key={id} type="button" className="btn btn-secondary btn-block oauth-btn"
+          onClick={() => signIn(id)} disabled={busy !== null}>
+          <Icon /> {t(label)}
+        </button>
+      ))}
       {error && <p className="form-error" role="alert">{error}</p>}
       <div className="divider"><span>{t("auth.or")}</span></div>
     </div>

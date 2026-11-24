@@ -87,7 +87,8 @@
     "completeText": "Выберите никнейм и укажите номер WhatsApp.",
     "completeCta": "Продолжить",
     "oauthFailed": "Вход отменён или не удался. Попробуйте снова.",
-    "signingIn": "Выполняем вход…"
+    "signingIn": "Выполняем вход…",
+    "github": "Войти через GitHub"
   },
   "errors": {
     "invalid_credentials": "Неверный логин или пароль",
