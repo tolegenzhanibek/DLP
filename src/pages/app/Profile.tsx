@@ -2,34 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { AvatarCropper } from "../../components/AvatarCropper";
-import { IconLink, IconLock, IconMail, IconMapPin, IconPhone, IconPlus, IconTrash, IconUser } from "../../components/icons";
+import { IconLock, IconMail } from "../../components/icons";
 import {
-  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal, PasswordField, Select, TextArea, toast,
+  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal, PasswordField, toast,
 } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
-import { EMAIL_RE, fmtDate, fmtDateTime, isOnline, NICK_RE, normalizePhone, PHONE_RE } from "../../lib/format";
+import { EMAIL_RE, fmtDate, fmtDateTime, isOnline, NICK_RE } from "../../lib/format";
 import { SITE_URL, supabase } from "../../lib/supabase";
-import type { Gender, Profile as P } from "../../lib/types";
-
-const hostOf = (url: string) => {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-};
-
-function Links({ links }: { links: string[] }) {
-  if (!links.length) return null;
-  return (
-    <div className="links">
-      {links.map((l) => (
-        <a key={l} href={l} target="_blank" rel="noopener noreferrer nofollow" className="chip"><IconLink /> {hostOf(l)}</a>
-      ))}
-    </div>
-  );
-}
+import type { Profile as P } from "../../lib/types";
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -51,8 +32,6 @@ export default function Profile() {
             <span className="muted small">{t("profile.memberSince", { date: fmtDate(profile.created_at) })}</span>
           </div>
         </div>
-        {profile.bio && <p className="bio">{profile.bio}</p>}
-        <Links links={profile.links ?? []} />
         <Button variant="secondary" block onClick={() => setEditing(true)}>{t("profile.edit")}</Button>
       </div>
 
@@ -62,9 +41,6 @@ export default function Profile() {
           <li><IconMail /><span>{profile.email}</span>
             <button type="button" className="link-btn" onClick={() => setEmailOpen(true)}>{t("profile.changeEmail")}</button></li>
           {profile.new_email && <li className="muted small">{t("profile.pendingEmail", { email: profile.new_email })}</li>}
-          <li><IconPhone /><span>{profile.phone || "—"}</span></li>
-          <li><IconMapPin /><span>{profile.city || "—"}</span></li>
-          <li><IconUser /><span>{t(`profile.${profile.gender}`)}</span></li>
         </ul>
       </div>
 
@@ -80,11 +56,6 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
   const [f, setF] = useState({
     display_name: profile.display_name ?? "",
     nickname: profile.nickname,
-    bio: profile.bio ?? "",
-    gender: profile.gender,
-    city: profile.city ?? "",
-    phone: profile.phone ?? "",
-    links: profile.links?.length ? [...profile.links] : [],
   });
   const [avatar, setAvatar] = useState<string | null>(profile.avatar_url);
   const [crop, setCrop] = useState<File | null>(null);
@@ -93,9 +64,7 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
   const fileInput = useRef<HTMLInputElement>(null);
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }));
 
-  const phoneOk = !f.phone || PHONE_RE.test(normalizePhone(f.phone));
   const nickOk = NICK_RE.test(f.nickname.trim().toLowerCase());
-  const linksOk = f.links.every((l) => !l.trim() || /^https?:\/\/\S{3,200}$/.test(l.trim()));
 
   async function uploadAvatar(blob: Blob) {
     setCrop(null);
@@ -108,17 +77,11 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
   }
 
   async function save() {
-    if (!phoneOk || !nickOk || !linksOk) return;
+    if (!nickOk) return;
     setBusy(true);
     setError(null);
     const { data, error } = await supabase.rpc("update_my_profile", {
-      p: {
-        ...f,
-        nickname: f.nickname.trim().toLowerCase(),
-        phone: normalizePhone(f.phone),
-        links: f.links.map((l) => l.trim()).filter(Boolean),
-        avatar_url: avatar ?? "",
-      },
+      p: { display_name: f.display_name, nickname: f.nickname.trim().toLowerCase(), avatar_url: avatar ?? "" },
     });
     setBusy(false);
     if (error) return setError(errorText(t, error));
@@ -129,7 +92,7 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
   return (
     <>
       <Modal open title={t("profile.editTitle")} onClose={onClose} onDone={save} doneLoading={busy}
-        doneDisabled={!phoneOk || !nickOk || !linksOk}>
+        doneDisabled={!nickOk}>
         <div className="stack">
           <div className="avatar-edit">
             <Avatar url={avatar} name={f.display_name || f.nickname} size={88} />
@@ -143,28 +106,6 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
           <Field label={t("profile.displayName")} value={f.display_name} maxLength={60} onChange={(e) => set("display_name", e.target.value)} />
           <Field label={t("auth.nickname")} value={f.nickname} maxLength={24} autoCapitalize="off"
             onChange={(e) => set("nickname", e.target.value)} error={nickOk ? null : t("auth.nicknameInvalid")} />
-          <TextArea label={t("profile.bio")} value={f.bio} maxLength={300} rows={3} onChange={(e) => set("bio", e.target.value)} />
-          <Select label={t("profile.gender")} value={f.gender} onChange={(v) => set("gender", v as Gender)}
-            options={(["unspecified", "female", "male"] as Gender[]).map((g) => ({ value: g, label: t(`profile.${g}`) }))} />
-          <Field label={t("profile.city")} value={f.city} maxLength={60} onChange={(e) => set("city", e.target.value)} />
-          <Field label={t("auth.phone")} type="tel" value={f.phone} onChange={(e) => set("phone", e.target.value)}
-            error={phoneOk ? null : t("errors.phone_invalid")} />
-          <div className="field">
-            <span className="field-label"><span>{t("profile.links")}</span></span>
-            <div className="stack-sm">
-              {f.links.map((l, i) => (
-                <div key={i} className="field-control">
-                  <input value={l} placeholder="https://" inputMode="url" aria-label={`${t("profile.links")} ${i + 1}`}
-                    onChange={(e) => set("links", f.links.map((x, k) => (k === i ? e.target.value : x)))} />
-                  <button type="button" className="eye" aria-label={t("common.delete")}
-                    onClick={() => set("links", f.links.filter((_, k) => k !== i))}><IconTrash /></button>
-                </div>
-              ))}
-              {f.links.length < 5 && (
-                <Button variant="ghost" onClick={() => set("links", [...f.links, ""])}><IconPlus /> {t("profile.addLink")}</Button>
-              )}
-            </div>
-          </div>
           {error && <p className="form-error" role="alert">{error}</p>}
         </div>
       </Modal>
@@ -220,7 +161,7 @@ function ChangeEmail({ onClose }: { onClose: () => void }) {
 export function PublicProfile() {
   const { t } = useTranslation();
   const { nickname } = useParams();
-  const [p, setP] = useState<(Pick<P, "id" | "nickname" | "display_name" | "avatar_url" | "bio" | "links" | "created_at" | "last_seen_at">) | null | undefined>(undefined);
+  const [p, setP] = useState<(Pick<P, "id" | "nickname" | "display_name" | "avatar_url" | "created_at" | "last_seen_at">) | null | undefined>(undefined);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -249,8 +190,6 @@ export function PublicProfile() {
             )}
           </div>
         </div>
-        {p.bio && <p className="bio">{p.bio}</p>}
-        <Links links={p.links ?? []} />
       </div>
     </div>
   );
