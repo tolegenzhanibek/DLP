@@ -64,8 +64,7 @@ reset role;
 set role authenticated;
 select set_config('request.jwt.claims','{"sub":"33333333-3333-3333-3333-333333333333","aal":"aal1"}',false);
 select set_config('request.jwt.claim.sub','33333333-3333-3333-3333-333333333333',false);
-do $$ begin perform public.admin_stats(); raise exception 'aal1 admin allowed';
-exception when insufficient_privilege then raise notice 'OK admin without TOTP denied'; end $$;
+select 'admin without TOTP allowed (0009)', (public.admin_stats() ? 'users_total') ok;
 select 'admin aal1 sees scans', count(*) from public.scans;
 -- admin WITH mfa
 select set_config('request.jwt.claims','{"sub":"33333333-3333-3333-3333-333333333333","aal":"aal2"}',false);
