@@ -610,3 +610,42 @@ a { color: var(--text); }
 .session-list { display: flex; flex-direction: column; font-weight: 400; }
 .session-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; }
 .session-others { align-self: flex-start; padding-left: 0; font-weight: 600; }
+
+/* =====================================================================
+   Semantic colours are allowed: errors, success, sensitivity levels and
+   statuses keep their colours. Brand UI (buttons, logo, links) stays mono.
+   ===================================================================== */
+:root {
+  --danger: #dc2626; --ok: #16a34a; --warn: #d97706;
+  --lv-public: #16a34a; --lv-internal: #0284c7; --lv-confidential: #d97706; --lv-restricted: #dc2626;
+  --lv-public-fg: #15803d; --lv-public-bg: #dcfce7;
+  --lv-internal-fg: #0369a1; --lv-internal-bg: #e0f2fe;
+  --lv-confidential-fg: #b45309; --lv-confidential-bg: #fef3c7;
+  --lv-restricted-fg: #b91c1c; --lv-restricted-bg: #fee2e2;
+}
+:root[data-theme="dark"] {
+  --danger: #f87171; --ok: #4ade80; --warn: #fbbf24;
+  --lv-public: #4ade80; --lv-internal: #38bdf8; --lv-confidential: #fbbf24; --lv-restricted: #f87171;
+  --lv-public-fg: #4ade80; --lv-public-bg: rgba(74, 222, 128, 0.14);
+  --lv-internal-fg: #38bdf8; --lv-internal-bg: rgba(56, 189, 248, 0.14);
+  --lv-confidential-fg: #fbbf24; --lv-confidential-bg: rgba(251, 191, 36, 0.14);
+  --lv-restricted-fg: #f87171; --lv-restricted-bg: rgba(248, 113, 113, 0.16);
+}
+/* errors */
+.field-error, .form-error, .danger-text, .state-error { color: var(--danger) !important; font-weight: 500; }
+.field-control.has-error { border-color: var(--danger); }
+.toast-error { background: var(--danger); color: #fff; }
+/* success */
+.form-info { color: var(--ok); }
+.hint.ok { color: var(--ok); }
+.hint.bad { color: var(--danger); }
+.input-status.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); border: 0; }
+.input-status.bad { background: color-mix(in srgb, var(--danger) 14%, transparent); color: var(--danger); border: 0; }
+.online-dot { background: var(--ok); }
+.online { color: var(--ok); }
+.nav-badge { background: var(--danger); color: #fff; }
+/* review statuses */
+.review { background: var(--surface-2); color: var(--muted); text-decoration: none; }
+.review-confirmed { color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); }
+.review-disputed { color: var(--warn); background: color-mix(in srgb, var(--warn) 14%, transparent); }
+.review-rejected { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); text-decoration: none; }
