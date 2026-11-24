@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
   if (req.method !== "POST") return json(req, { error: "method_not_allowed" }, 405);
 
-  let body: { identifier?: string; password?: string; captchaToken?: string };
+  let body: { action?: string; identifier?: string; password?: string; captchaToken?: string };
   try {
     body = await req.json();
   } catch {
@@ -15,6 +15,19 @@ Deno.serve(async (req) => {
   }
   const identifier = (body.identifier ?? "").trim().toLowerCase();
   const password = body.password ?? "";
+
+  // Step 1 of the "Log in or sign up" modal: does this e-mail / nickname have an account?
+  if (body.action === "check") {
+    if (!identifier || identifier.length > 254) return json(req, { error: "bad_request" }, 400);
+    const db = admin();
+    const { data: ok } = await db.rpc("check_rate_limit", {
+      p_key: `check_ip:${clientIp(req)}`, p_max: 30, p_window_seconds: 900,
+    });
+    if (ok === false) return json(req, { error: "rate_limited" }, 429);
+    const { data: exists } = await db.rpc("account_exists", { p_identifier: identifier });
+    return json(req, { exists: Boolean(exists) });
+  }
+
   if (!identifier || !password || identifier.length > 254 || password.length > 128) {
     return json(req, { error: "invalid_credentials" }, 400);
   }

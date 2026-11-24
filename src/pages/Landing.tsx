@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { AuthModal } from "../components/AuthModal";
 import { Composer } from "../components/Composer";
 import { IconLock, IconShieldCheck, IconSparkle, IconUsers } from "../components/icons";
 import { LanguageSwitch } from "../components/LanguageSwitch";
@@ -7,7 +8,7 @@ import { Logo } from "../components/ui";
 import { useAuth } from "../lib/auth";
 
 /** Logged-out home: the same composer as inside the app; sending leads to sign-up. */
-export default function Landing() {
+export default function Landing({ auth = false }: { auth?: boolean }) {
   const { t } = useTranslation();
   const { session } = useAuth();
   const nav = useNavigate();
@@ -42,6 +43,7 @@ export default function Landing() {
         <Link to="/signup" className="btn btn-primary btn-pill show-xs">{t("landing.signupFree")}</Link>
       </section>
       <footer className="landing-foot">{t("landing.footer")}</footer>
+      {auth && <AuthModal onClose={() => nav("/", { replace: true })} />}
     </div>
   );
 }

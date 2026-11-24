@@ -94,3 +94,12 @@ do $$ begin perform public.complete_my_profile('googler', '12'); raise exception
 exception when sqlstate '22023' then raise notice 'OK complete_my_profile rejects bad phone'; end $$;
 select 'completed', (public.complete_my_profile('Googler', '+7 702 000 11 22'))->>'needs_setup' needs_setup;
 reset role;
+
+set role service_role;
+select 'account_exists', public.account_exists('ALICE@x.kz') email_yes, public.account_exists('nobody@x.kz') email_no,
+       public.account_exists('Bob') nick_yes, public.account_exists('ghost') nick_no;
+reset role;
+set role authenticated;
+do $$ begin perform public.account_exists('bob'); raise exception 'exposed';
+exception when insufficient_privilege then raise notice 'OK account_exists not exposed to clients'; end $$;
+reset role;

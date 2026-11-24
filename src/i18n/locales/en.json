@@ -95,7 +95,14 @@
     "completeCta": "Continue",
     "oauthFailed": "Sign-in was cancelled or failed. Try again.",
     "signingIn": "Signing you in…",
-    "github": "Continue with GitHub"
+    "github": "Continue with GitHub",
+    "modalTitle": "Log in or sign up",
+    "modalText": "Check documents, keep your history and get notified about decisions.",
+    "emailOrNick": "Email or nickname",
+    "continue": "Continue",
+    "change": "Change",
+    "enterPassword": "Enter your password",
+    "createAccount": "Create your account"
   },
   "errors": {
     "invalid_credentials": "Wrong login or password",
