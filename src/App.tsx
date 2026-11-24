@@ -15,6 +15,7 @@ import Signup from "./pages/auth/Signup";
 import { Blocked, NotFound, Pending } from "./pages/errors/ErrorPages";
 import Scans from "./pages/app/Scans";
 import ScanDetail from "./pages/app/ScanDetail";
+import History from "./pages/app/History";
 import Notifications from "./pages/app/Notifications";
 import Profile, { PublicProfile } from "./pages/app/Profile";
 import Settings from "./pages/app/Settings";
@@ -46,6 +47,7 @@ export default function App() {
               <Route element={<AppShell />}>
                 <Route path="/app" element={<Scans />} />
                 <Route path="/app/scans/:id" element={<ScanDetail />} />
+                <Route path="/history" element={<History />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/u/:nickname" element={<PublicProfile />} />

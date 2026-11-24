@@ -1,37 +1,144 @@
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
-import { IconBell, IconDoc, IconSettings, IconShield, IconUser } from "./icons";
-import { LoadingState, Logo } from "./ui";
+import { supabase } from "../lib/supabase";
+import type { Level } from "../lib/types";
+import { IconBell, IconEdit, IconHistory, IconMenu, IconSettings, IconShield, IconSidebar, IconUser } from "./icons";
+import { Avatar, LoadingState, Logo } from "./ui";
 
-/** Same navigation items on every screen size; only the placement changes (sidebar vs bottom bar). */
-export function AppShell() {
+interface RecentScan {
+  id: string;
+  file_name: string;
+  final_level: Level;
+}
+
+/** Fired after a new scan is saved so the sidebar history refreshes. */
+export const SCANS_CHANGED = "senim:scans-changed";
+
+function Sidebar({ onNavigate }: { onNavigate: () => void }) {
   const { t } = useTranslation();
   const { profile, unread } = useAuth();
+  const nav = useNavigate();
+  const [recent, setRecent] = useState<RecentScan[] | null>(null);
+
+  const load = useCallback(async () => {
+    if (!profile) return;
+    const { data } = await supabase
+      .from("scans")
+      .select("id,file_name,final_level")
+      .eq("owner_id", profile.id)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    setRecent((data as RecentScan[]) ?? []);
+  }, [profile]);
+
+  useEffect(() => {
+    void load();
+    window.addEventListener(SCANS_CHANGED, load);
+    return () => window.removeEventListener(SCANS_CHANGED, load);
+  }, [load]);
+
   const items = [
-    { to: "/app", label: t("nav.scans"), icon: <IconDoc />, tour: "nav-scans", end: false },
     { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
+    { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history" },
     { to: "/profile", label: t("nav.profile"), icon: <IconUser />, tour: "nav-profile" },
     { to: "/settings", label: t("nav.settings"), icon: <IconSettings />, tour: "nav-settings" },
     ...(profile?.role === "admin" ? [{ to: "/admin", label: t("nav.admin"), icon: <IconShield />, tour: "nav-admin" }] : []),
   ];
+  const name = profile?.display_name || profile?.nickname || "";
+
   return (
-    <div className="shell">
-      <nav className="nav" aria-label="main">
-        <div className="nav-brand"><Logo /></div>
+    <>
+      <div className="side-top">
+        <Link to="/app" className="side-logo" onClick={onNavigate} aria-label="Senim"><Logo size={26} /></Link>
+      </div>
+      <nav className="side-nav" aria-label="main">
+        <button type="button" className="side-item" data-tour="nav-scans"
+          onClick={() => { onNavigate(); nav("/app", { state: { fresh: Date.now() } }); }}>
+          <IconEdit /><span>{t("nav.newScan")}</span>
+        </button>
         {items.map((it) => (
-          <NavLink key={it.to} to={it.to} className="nav-item" data-tour={it.tour}>
-            <span className="nav-icon">
+          <NavLink key={it.to} to={it.to} className="side-item" data-tour={it.tour} onClick={onNavigate}>
+            <span className="side-icon">
               {it.icon}
               {it.badge ? <span className="nav-badge">{it.badge > 99 ? "99+" : it.badge}</span> : null}
             </span>
-            <span className="nav-label">{it.label}</span>
+            <span>{it.label}</span>
           </NavLink>
         ))}
       </nav>
-      <main className="main">
-        <Outlet />
-      </main>
+      <div className="side-section" data-tour="history">
+        <div className="side-label">{t("nav.history")}</div>
+        {recent === null ? null : recent.length === 0 ? (
+          <p className="side-empty">{t("scan.noHistory")}</p>
+        ) : (
+          recent.map((s) => (
+            <NavLink key={s.id} to={`/app/scans/${s.id}`} className="side-item side-history" onClick={onNavigate}
+              title={s.file_name}>
+              <span className={`dot-level level-${s.final_level}`} aria-label={t(`levels.${s.final_level}`)} />
+              <span className="truncate">{s.file_name}</span>
+            </NavLink>
+          ))
+        )}
+      </div>
+      <Link to="/profile" className="side-user" onClick={onNavigate}>
+        <Avatar url={profile?.avatar_url} name={name} size={32} />
+        <span className="truncate">{name}</span>
+      </Link>
+    </>
+  );
+}
+
+/** ChatGPT-style shell: same items everywhere; sidebar on desktop, drawer on mobile. */
+export function AppShell() {
+  const { t } = useTranslation();
+  const loc = useLocation();
+  const nav = useNavigate();
+  const [open, setOpen] = useState(false); // mobile drawer
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("sidebar") === "collapsed";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => setOpen(false), [loc.pathname]);
+  useEffect(() => {
+    try {
+      localStorage.setItem("sidebar", collapsed ? "collapsed" : "open");
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
+
+  return (
+    <div className={`shell${collapsed ? " collapsed" : ""}`}>
+      <aside className={`sidebar${open ? " open" : ""}`}>
+        <button type="button" className="icon-btn side-toggle" aria-label={t("nav.menu")}
+          onClick={() => (window.innerWidth < 768 ? setOpen(false) : setCollapsed(true))}>
+          <IconSidebar />
+        </button>
+        <Sidebar onNavigate={() => setOpen(false)} />
+      </aside>
+      {open && <div className="scrim" onClick={() => setOpen(false)} />}
+      <div className="main-col">
+        <header className="topbar">
+          <button type="button" className={`icon-btn${collapsed ? "" : " mobile-only"}`} aria-label={t("nav.menu")}
+            onClick={() => (window.innerWidth < 768 ? setOpen(true) : setCollapsed(false))}>
+            {collapsed ? <IconSidebar /> : <IconMenu />}
+          </button>
+          <Link to="/app" className="topbar-logo mobile-only"><Logo size={22} /></Link>
+          <button type="button" className="icon-btn mobile-only" aria-label={t("nav.newScan")}
+            onClick={() => nav("/app", { state: { fresh: Date.now() } })}>
+            <IconEdit />
+          </button>
+        </header>
+        <main className="main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
