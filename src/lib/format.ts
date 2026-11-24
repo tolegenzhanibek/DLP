@@ -18,6 +18,4 @@ export const isOnline = (iso: string | null | undefined) =>
   Boolean(iso && Date.now() - new Date(iso).getTime() < 2 * 60_000);
 
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-export const PHONE_RE = /^\+?[0-9]{10,15}$/;
 export const NICK_RE = /^[a-z0-9_.]{3,24}$/;
-export const normalizePhone = (s: string) => s.replace(/[^0-9+]/g, "");
