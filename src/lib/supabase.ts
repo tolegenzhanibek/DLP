@@ -13,7 +13,6 @@ export const supabase = createClient(url ?? "http://localhost:54321", key ?? "pu
 export const FUNCTIONS_URL = `${url ?? "http://localhost:54321"}/functions/v1`;
 export const SITE_URL = (import.meta.env.VITE_SITE_URL as string | undefined) ?? window.location.origin;
 export const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string | undefined;
-export const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
 /** Calls an edge function; returns parsed JSON and HTTP status. Never throws on HTTP errors. */
 export async function callFunction<T = Record<string, unknown>>(

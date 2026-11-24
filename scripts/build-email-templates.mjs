@@ -1,7 +1,7 @@
 // Generates supabase/templates/*.html from one layout (run: node scripts/build-email-templates.mjs).
 import { writeFileSync } from "node:fs";
 
-const BRAND = "#4F46E5";
+const BRAND = "#0D0D0D";
 const templates = {
   confirmation: {
     link: "{{ .SiteURL }}/confirm-email?token_hash={{ .TokenHash }}&type=signup",

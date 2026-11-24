@@ -229,9 +229,9 @@ export function Logo({ size = 28 }: { size?: number }) {
   return (
     <span className="logo">
       <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
-        <rect width="32" height="32" rx="9" fill="var(--brand)" />
-        <path d="M16 6.5 9 9.2v5.6c0 4.6 3 8.3 7 9.7 4-1.4 7-5.1 7-9.7V9.2z" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinejoin="round" />
-        <path d="m12.6 15.6 2.4 2.4 4.6-4.8" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+        <rect width="32" height="32" rx="9" fill="var(--text)" />
+        <path d="M16 6.5 9 9.2v5.6c0 4.6 3 8.3 7 9.7 4-1.4 7-5.1 7-9.7V9.2z" fill="none" stroke="var(--bg)" strokeWidth="2.2" strokeLinejoin="round" />
+        <path d="m12.6 15.6 2.4 2.4 4.6-4.8" fill="none" stroke="var(--bg)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <span className="logo-text">Senim</span>
     </span>

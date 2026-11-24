@@ -2,15 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { IconChevron, IconLogout } from "../../components/icons";
-import { Button, ErrorState, LoadingState, Modal, PasswordField, Segmented, Toggle, toast } from "../../components/ui";
+import { Button, ErrorState, LoadingState, Modal, PasswordField, Segmented, toast } from "../../components/ui";
 import { setLanguage, type Lang } from "../../i18n";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
 import { fmtDateTime } from "../../lib/format";
-import { disablePush, enablePush, pushSupported } from "../../lib/push";
 import { supabase } from "../../lib/supabase";
 import { setTheme } from "../../lib/theme";
-import type { Profile, Theme, Visibility } from "../../lib/types";
+import type { Profile, Theme } from "../../lib/types";
 
 interface SessionRow {
   id: string;
@@ -35,7 +34,6 @@ export default function Settings() {
   const nav = useNavigate();
   const { profile, patchProfile, signOut } = useAuth();
   const [pwOpen, setPwOpen] = useState(false);
-  const [pushNote, setPushNote] = useState<string | null>(pushSupported() ? null : t("settings.pushUnsupported"));
 
   const save = useCallback(async (patch: Partial<Profile>) => {
     patchProfile(patch); // optimistic merge
@@ -45,25 +43,12 @@ export default function Settings() {
 
   if (!profile) return <LoadingState />;
 
-  async function onPush(on: boolean) {
-    if (on) {
-      const r = await enablePush();
-      if (r !== "ok") {
-        setPushNote(r === "denied" ? t("settings.pushDenied") : r === "unsupported" ? t("settings.pushUnsupported") : t("errors.generic"));
-        return;
-      }
-    } else {
-      await disablePush();
-    }
-    setPushNote(null);
-    await save({ push_enabled: on });
-  }
-
+  // Everything lives in one card, separated only by thin dividers.
   return (
     <div className="page">
       <header className="page-head"><h1>{t("settings.title")}</h1></header>
 
-      <div className="card settings">
+      <div className="card settings-card">
         <div className="setting">
           <span>{t("settings.theme")}</span>
           <Segmented<Theme> label={t("settings.theme")} value={profile.theme}
@@ -76,33 +61,17 @@ export default function Settings() {
             onChange={(v) => { setLanguage(v); void save({ language: v }); }}
             options={[{ value: "kk", label: "Қазақша" }, { value: "ru", label: "Русский" }, { value: "en", label: "English" }]} />
         </div>
-        <div className="setting">
-          <span>{t("settings.onlineVisibility")}</span>
-          <Segmented<Visibility> label={t("settings.onlineVisibility")} value={profile.online_visibility}
-            onChange={(v) => void save({ online_visibility: v })}
-            options={(["everyone", "admins", "nobody"] as Visibility[]).map((v) => ({ value: v, label: t(`settings.${v}`) }))} />
-        </div>
-        <div className="setting row-setting">
-          <div>
-            <span>{t("settings.push")}</span>
-            {pushNote && <p className="muted small">{pushNote}</p>}
-          </div>
-          <Toggle label={t("settings.push")} checked={profile.push_enabled} onChange={onPush} disabled={!pushSupported()} />
-        </div>
-      </div>
-
-      <div className="card list-card">
-        <button type="button" className="list-row" onClick={() => nav("/app?tour=1")}>
+        <button type="button" className="setting-row" onClick={() => nav("/app?tour=1")}>
           <span>{t("settings.tour")}</span><IconChevron className="muted" />
         </button>
-        <button type="button" className="list-row" onClick={() => setPwOpen(true)}>
+        <button type="button" className="setting-row" onClick={() => setPwOpen(true)}>
           <span>{t("settings.changePassword")}</span><IconChevron className="muted" />
         </button>
+        <Sessions />
+        <button type="button" className="setting-row" onClick={signOut}>
+          <span className="row gap-sm"><IconLogout /> {t("settings.signOut")}</span>
+        </button>
       </div>
-
-      <Sessions />
-
-      <Button variant="secondary" block onClick={signOut}><IconLogout /> {t("settings.signOut")}</Button>
 
       {pwOpen && <ChangePassword onClose={() => setPwOpen(false)} />}
     </div>
@@ -136,12 +105,12 @@ function Sessions() {
   }
 
   return (
-    <section>
-      <h2 className="section-title">{t("settings.sessions")}</h2>
+    <div className="setting">
+      <span>{t("settings.sessions")}</span>
       {failed ? <ErrorState onRetry={load} /> : rows === null ? <LoadingState /> : (
-        <div className="card list-card">
+        <div className="session-list">
           {rows.map((s) => (
-            <div key={s.id} className="list-row static">
+            <div key={s.id} className="session-row">
               <div className="list-main">
                 <b>{deviceName(s.user_agent, t("settings.unknownDevice"))}</b>
                 <span className="muted small">
@@ -152,11 +121,11 @@ function Sessions() {
             </div>
           ))}
           {rows.length > 1 && (
-            <button type="button" className="list-row danger-text" onClick={revokeOthers}>{t("settings.revokeOthers")}</button>
+            <button type="button" className="link-btn session-others" onClick={revokeOthers}>{t("settings.revokeOthers")}</button>
           )}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 

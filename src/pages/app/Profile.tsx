@@ -2,21 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { AvatarCropper } from "../../components/AvatarCropper";
-import { IconLock, IconMail } from "../../components/icons";
 import {
-  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal, PasswordField, toast,
+  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal,
 } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
-import { EMAIL_RE, fmtDate, fmtDateTime, isOnline, NICK_RE } from "../../lib/format";
-import { SITE_URL, supabase } from "../../lib/supabase";
+import { fmtDate, fmtDateTime, isOnline, NICK_RE } from "../../lib/format";
+import { supabase } from "../../lib/supabase";
 import type { Profile as P } from "../../lib/types";
 
 export default function Profile() {
   const { t } = useTranslation();
   const { profile } = useAuth();
   const [editing, setEditing] = useState(false);
-  const [emailOpen, setEmailOpen] = useState(false);
   if (!profile) return <LoadingState />;
   const name = profile.display_name || profile.nickname;
 
@@ -35,17 +33,7 @@ export default function Profile() {
         <Button variant="secondary" block onClick={() => setEditing(true)}>{t("profile.edit")}</Button>
       </div>
 
-      <div className="card">
-        <div className="private-head"><IconLock /> <span className="muted small">{t("profile.onlyYou")}</span></div>
-        <ul className="info-list">
-          <li><IconMail /><span>{profile.email}</span>
-            <button type="button" className="link-btn" onClick={() => setEmailOpen(true)}>{t("profile.changeEmail")}</button></li>
-          {profile.new_email && <li className="muted small">{t("profile.pendingEmail", { email: profile.new_email })}</li>}
-        </ul>
-      </div>
-
       {editing && <EditProfile profile={profile} onClose={() => setEditing(false)} />}
-      {emailOpen && <ChangeEmail onClose={() => setEmailOpen(false)} />}
     </div>
   );
 }
@@ -111,49 +99,6 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
       </Modal>
       {crop && <AvatarCropper file={crop} onCancel={() => setCrop(null)} onDone={uploadAvatar} />}
     </>
-  );
-}
-
-function ChangeEmail({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation();
-  const { refreshProfile } = useAuth();
-  const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
-  const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit() {
-    if (!EMAIL_RE.test(email.trim())) return setError(t("errors.email_invalid"));
-    setBusy(true);
-    setError(null);
-    const { data: ok, error: e1 } = await supabase.rpc("verify_my_password", { p_password: password });
-    if (e1 || !ok) {
-      setBusy(false);
-      return setError(e1 ? errorText(t, e1) : t("errors.wrong_password"));
-    }
-    const { error } = await supabase.auth.updateUser(
-      { email: email.trim().toLowerCase() },
-      { emailRedirectTo: `${SITE_URL}/confirm-email` },
-    );
-    setBusy(false);
-    if (error) return setError(errorText(t, error));
-    toast(t("profile.emailChangeSent", { email: email.trim() }));
-    void refreshProfile();
-    onClose();
-  }
-
-  return (
-    <Modal open title={t("profile.changeEmail")} onClose={onClose} onDone={submit} doneLoading={busy}
-      doneDisabled={!password || !email}>
-      <div className="stack">
-        <PasswordField label={t("profile.currentPassword")} value={password} autoComplete="current-password"
-          onChange={(e) => setPassword(e.target.value)} visible={show} onToggle={() => setShow(!show)} />
-        <Field label={t("profile.newEmail")} type="email" value={email} autoComplete="email"
-          onChange={(e) => setEmail(e.target.value)} />
-        {error && <p className="form-error" role="alert">{error}</p>}
-      </div>
-    </Modal>
   );
 }
 

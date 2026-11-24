@@ -5,7 +5,7 @@ const { chromium } = createRequire(import.meta.url)("playwright");
 
 const mark = (size, pad = 0) => `
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="${-pad} ${-pad} ${32 + pad * 2} ${32 + pad * 2}">
-  <rect x="${-pad}" y="${-pad}" width="${32 + pad * 2}" height="${32 + pad * 2}" rx="${pad ? 0 : 9}" fill="#4F46E5"/>
+  <rect x="${-pad}" y="${-pad}" width="${32 + pad * 2}" height="${32 + pad * 2}" rx="${pad ? 0 : 9}" fill="#0D0D0D"/>
   <path d="M16 6.5 9 9.2v5.6c0 4.6 3 8.3 7 9.7 4-1.4 7-5.1 7-9.7V9.2z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/>
   <path d="m12.6 15.6 2.4 2.4 4.6-4.8" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
