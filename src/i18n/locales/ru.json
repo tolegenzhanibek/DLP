@@ -80,7 +80,15 @@
     "nicknameFree": "Свободен",
     "nicknameTaken": "Занят",
     "nicknameInvalid": "3–24 символа: a–z, 0–9, _ и .",
-    "toLogin": "Вернуться ко входу"
+    "toLogin": "Вернуться ко входу",
+    "google": "Войти через Google",
+    "or": "или",
+    "completeTitle": "Завершите профиль",
+    "completeText": "Выберите никнейм и укажите номер WhatsApp.",
+    "completeCta": "Продолжить",
+    "oauthFailed": "Вход отменён или не удался. Попробуйте снова.",
+    "signingIn": "Выполняем вход…",
+    "github": "Войти через GitHub"
   },
   "errors": {
     "invalid_credentials": "Неверный логин или пароль",

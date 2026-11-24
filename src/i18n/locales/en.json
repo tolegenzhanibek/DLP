@@ -80,7 +80,15 @@
     "nicknameFree": "Available",
     "nicknameTaken": "Taken",
     "nicknameInvalid": "3–24 characters: a–z, 0–9, _ and .",
-    "toLogin": "Back to log in"
+    "toLogin": "Back to log in",
+    "google": "Continue with Google",
+    "or": "or",
+    "completeTitle": "Finish your profile",
+    "completeText": "Choose a nickname and add your WhatsApp number.",
+    "completeCta": "Continue",
+    "oauthFailed": "Sign-in was cancelled or failed. Try again.",
+    "signingIn": "Signing you in…",
+    "github": "Continue with GitHub"
   },
   "errors": {
     "invalid_credentials": "Wrong login or password",

@@ -80,7 +80,15 @@
     "nicknameFree": "Бос",
     "nicknameTaken": "Бос емес",
     "nicknameInvalid": "3–24 таңба: a–z, 0–9, _ және .",
-    "toLogin": "Кіру бетіне оралу"
+    "toLogin": "Кіру бетіне оралу",
+    "google": "Google арқылы кіру",
+    "or": "немесе",
+    "completeTitle": "Профильді толтырыңыз",
+    "completeText": "Никнейм таңдап, WhatsApp нөміріңізді енгізіңіз.",
+    "completeCta": "Жалғастыру",
+    "oauthFailed": "Кіру тоқтатылды немесе сәтсіз болды. Қайталап көріңіз.",
+    "signingIn": "Жүйеге кіріп жатырмыз…",
+    "github": "GitHub арқылы кіру"
   },
   "errors": {
     "invalid_credentials": "Логин немесе құпиясөз қате",

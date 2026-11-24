@@ -4,6 +4,8 @@ import { AppShell, PublicShell, RedirectIfAuthed, RequireActive } from "./compon
 import { LoadingState } from "./components/ui";
 import { AuthProvider } from "./lib/auth";
 import Landing from "./pages/Landing";
+import AuthCallback from "./pages/auth/AuthCallback";
+import CompleteProfile from "./pages/auth/CompleteProfile";
 import ConfirmEmail from "./pages/auth/ConfirmEmail";
 import CheckEmail from "./pages/auth/CheckEmail";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -33,6 +35,8 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/check-email" element={<CheckEmail />} />
               </Route>
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/confirm-email" element={<ConfirmEmail />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/pending" element={<Pending />} />
