@@ -5,11 +5,16 @@ import { admin } from "../_shared/clients.ts";
 
 const SECRET = Deno.env.get("PUSH_WEBHOOK_SECRET") ?? "";
 const SITE_URL = Deno.env.get("SITE_URL") ?? "https://senim.app";
-webpush.setVapidDetails(
-  Deno.env.get("VAPID_SUBJECT") ?? `mailto:no-reply@${new URL(SITE_URL).hostname}`,
-  Deno.env.get("VAPID_PUBLIC_KEY") ?? "",
-  Deno.env.get("VAPID_PRIVATE_KEY") ?? "",
-);
+const VAPID_PUBLIC = Deno.env.get("VAPID_PUBLIC_KEY") ?? "";
+const VAPID_PRIVATE = Deno.env.get("VAPID_PRIVATE_KEY") ?? "";
+// Without VAPID keys push is simply disabled; the function must still boot.
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(
+    Deno.env.get("VAPID_SUBJECT") ?? `mailto:no-reply@${new URL(SITE_URL).hostname}`,
+    VAPID_PUBLIC,
+    VAPID_PRIVATE,
+  );
+}
 
 type Lang = "kk" | "ru" | "en";
 const TEXT: Record<string, Record<Lang, string>> = {
@@ -31,6 +36,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST" || !SECRET || !timingSafeEqual(req.headers.get("x-webhook-secret") ?? "", SECRET)) {
     return new Response("forbidden", { status: 403 });
   }
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return new Response("push not configured");
   const { notification_id } = await req.json().catch(() => ({}));
   if (typeof notification_id !== "string") return new Response("bad request", { status: 400 });
 
