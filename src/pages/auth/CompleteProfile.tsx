@@ -4,28 +4,25 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Button, Field, LoadingState } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
-import { NICK_RE, normalizePhone, PHONE_RE } from "../../lib/format";
+import { NICK_RE } from "../../lib/format";
 import { supabase } from "../../lib/supabase";
 import type { Profile } from "../../lib/types";
 import { AuthCard } from "./AuthCard";
 
 type NickState = "idle" | "checking" | "free" | "taken" | "invalid";
 
-/** One-time step after Google/Microsoft sign-up: real nickname + WhatsApp phone. */
+/** One-time step after Google/GitHub sign-up: pick a real nickname. */
 export default function CompleteProfile() {
   const { t } = useTranslation();
   const nav = useNavigate();
   const { session, profile, loading, patchProfile, signOut } = useAuth();
   const [nickname, setNickname] = useState("");
   const [nick, setNick] = useState<NickState>("idle");
-  const [phone, setPhone] = useState("");
-  const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile && !profile.nickname.startsWith("user_")) setNickname((n) => n || profile.nickname);
-    if (profile?.phone) setPhone((p) => p || profile.phone!);
   }, [profile]);
 
   useEffect(() => {
@@ -45,18 +42,12 @@ export default function CompleteProfile() {
   if (!session) return <Navigate to="/login" replace />;
   if (!profile!.needs_setup) return <Navigate to="/app" replace />;
 
-  const phoneErr = !PHONE_RE.test(normalizePhone(phone)) ? t("errors.phone_invalid") : null;
-
   async function submit(e: FormEvent) {
     e.preventDefault();
-    setTouched(true);
-    if (nick !== "free" || phoneErr) return;
+    if (nick !== "free") return;
     setBusy(true);
     setError(null);
-    const { data, error } = await supabase.rpc("complete_my_profile", {
-      p_nickname: nickname.trim().toLowerCase(),
-      p_phone: normalizePhone(phone),
-    });
+    const { data, error } = await supabase.rpc("complete_my_profile", { p_nickname: nickname.trim().toLowerCase() });
     setBusy(false);
     if (error) return setError(errorText(t, error));
     patchProfile(data as Profile);
@@ -77,8 +68,6 @@ export default function CompleteProfile() {
         <Field label={t("auth.nickname")} value={nickname} autoComplete="username" autoCapitalize="off" maxLength={24}
           onChange={(e) => setNickname(e.target.value)} status={nickStatus}
           error={nick === "invalid" ? t("auth.nicknameInvalid") : null} />
-        <Field label={t("auth.phone")} type="tel" value={phone} autoComplete="tel" inputMode="tel"
-          placeholder="+7 7__ ___ __ __" onChange={(e) => setPhone(e.target.value)} error={touched ? phoneErr : null} />
         {error && <p className="form-error" role="alert">{error}</p>}
         <Button type="submit" block loading={busy}>{t("auth.completeCta")}</Button>
       </form>

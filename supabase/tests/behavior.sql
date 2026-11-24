@@ -103,3 +103,14 @@ set role authenticated;
 do $$ begin perform public.account_exists('bob'); raise exception 'exposed';
 exception when insufficient_privilege then raise notice 'OK account_exists not exposed to clients'; end $$;
 reset role;
+
+-- 0007: e-mail sign-up without phone does not require setup; OAuth completes without phone
+insert into auth.users (id, email, raw_user_meta_data) values
+ ('55555555-5555-5555-5555-555555555555', 'nophone@x.kz', '{"nickname":"nophone"}'),
+ ('66666666-6666-6666-6666-666666666666', 'gh@x.kz', '{"name":"GH User"}');
+select 'no-phone signup needs_setup', needs_setup from public.profiles where nickname = 'nophone';
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"66666666-6666-6666-6666-666666666666","aal":"aal1"}',false);
+select set_config('request.jwt.claim.sub','66666666-6666-6666-6666-666666666666',false);
+select 'oauth complete without phone', (public.complete_my_profile('ghuser'))->>'needs_setup' needs_setup;
+reset role;

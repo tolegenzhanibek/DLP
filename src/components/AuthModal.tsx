@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { errorText } from "../lib/errors";
-import { EMAIL_RE, NICK_RE, normalizePhone, PHONE_RE } from "../lib/format";
+import { EMAIL_RE, NICK_RE } from "../lib/format";
 import { callFunction, SITE_URL, supabase } from "../lib/supabase";
 import { Captcha, captchaRequired, type CaptchaHandle } from "./Captcha";
 import { IconX } from "./icons";
@@ -24,7 +24,6 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
   const [show, setShow] = useState(false);
   const [nickname, setNickname] = useState("");
   const [nick, setNick] = useState<NickState>("idle");
-  const [phone, setPhone] = useState("");
   const [token, setToken] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -105,13 +104,12 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
     setError(errorText(t, data.error ?? "generic"));
   }
 
-  const phoneErr = !PHONE_RE.test(normalizePhone(phone)) ? t("errors.phone_invalid") : null;
   const pwErr = password.length < 8 ? t("errors.password_short") : null;
 
   async function signup(e: FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (nick !== "free" || phoneErr || pwErr) return;
+    if (nick !== "free" || pwErr) return;
     if (captchaRequired() && !token) return setError(t("errors.captcha_required"));
     setBusy(true);
     setError(null);
@@ -122,7 +120,7 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
       options: {
         captchaToken: token ?? undefined,
         emailRedirectTo: `${SITE_URL}/confirm-email`,
-        data: { nickname: nickname.trim().toLowerCase(), phone: normalizePhone(phone), language: i18n.language },
+        data: { nickname: nickname.trim().toLowerCase(), language: i18n.language },
       },
     });
     setBusy(false);
@@ -192,8 +190,6 @@ export function AuthModal({ onClose }: { onClose: () => void }) {
               <Field label={t("auth.nickname")} value={nickname} autoComplete="username" autoCapitalize="off" maxLength={24}
                 onChange={(e) => setNickname(e.target.value)} status={nickStatus} autoFocus
                 error={nick === "invalid" ? t("auth.nicknameInvalid") : null} />
-              <Field label={t("auth.phone")} type="tel" value={phone} autoComplete="tel" inputMode="tel"
-                placeholder="+7 7__ ___ __ __" onChange={(e) => setPhone(e.target.value)} error={touched ? phoneErr : null} />
               <PasswordField label={t("auth.password")} value={password} autoComplete="new-password"
                 onChange={(e) => setPassword(e.target.value)} visible={show} onToggle={() => setShow(!show)}
                 error={touched ? pwErr : null} />
