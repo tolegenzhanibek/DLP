@@ -541,3 +541,9 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fo
 .auth-card a.small, .auth-modal a.small { color: var(--muted); }
 @media (max-width: 480px) { .auth-card { background: transparent; } }
 .show-xs.btn-tall { width: 100%; max-width: 320px; }
+
+/* admin: sign-ups sparkline */
+.spark { display: grid; grid-template-columns: repeat(14, 1fr); align-items: end; gap: 6px; height: 140px; margin-top: 14px; }
+.spark-col { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; }
+.spark-bar { width: 100%; min-height: 3px; border-radius: 6px 6px 2px 2px; background: var(--brand); opacity: 0.85; }
+.spark-n { font-size: 11px; color: var(--muted); min-height: 14px; }

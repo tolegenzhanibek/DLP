@@ -124,20 +124,35 @@ function useRpc<T>(fn: string, args?: Record<string, unknown>) {
 
 function Overview() {
   const { t } = useTranslation();
-  const { data, failed, load } = useRpc<Record<string, number> & { by_level: Partial<Record<Level, number>> }>("admin_stats");
+  const { data, failed, load } = useRpc<Record<string, number> & {
+    by_level: Partial<Record<Level, number>>; signups_14d: { day: string; n: number }[];
+  }>("admin_stats");
   if (failed) return <ErrorState onRetry={load} />;
   if (!data) return <LoadingState />;
   const tiles: [string, number][] = [
-    [t("admin.usersTotal"), data.users_total], [t("admin.usersPending"), data.users_pending],
-    [t("admin.usersBlocked"), data.users_blocked], [t("admin.scansTotal"), data.scans_total],
+    [t("admin.usersTotal"), data.users_total], [t("admin.usersNew7d"), data.users_new_7d],
+    [t("admin.usersActive7d"), data.users_active_7d], [t("admin.scansTotal"), data.scans_total],
     [t("admin.scans7d"), data.scans_7d], [t("admin.disputesOpen"), data.disputes_open],
-    [t("admin.aiUnavailable"), data.ai_unavailable],
+    [t("admin.usersBlocked"), data.users_blocked], [t("admin.aiUnavailable"), data.ai_unavailable],
   ];
   const max = Math.max(1, ...LEVELS.map((l) => data.by_level?.[l] ?? 0));
+  const days = data.signups_14d ?? [];
+  const maxDay = Math.max(1, ...days.map((d) => d.n));
   return (
     <div className="stack">
       <div className="tiles">
         {tiles.map(([label, n]) => <div key={label} className="card tile"><span className="muted small">{label}</span><b>{n}</b></div>)}
+      </div>
+      <div className="card">
+        <h3>{t("admin.signups14d")}</h3>
+        <div className="spark" role="img" aria-label={t("admin.signups14d")}>
+          {days.map((d) => (
+            <div key={d.day} className="spark-col" title={`${fmtDate(d.day)}: ${d.n}`}>
+              <span className="spark-n">{d.n || ""}</span>
+              <span className="spark-bar" style={{ height: `${(d.n / maxDay) * 100}%` }} />
+            </div>
+          ))}
+        </div>
       </div>
       <div className="card">
         <h3>{t("admin.byLevel")}</h3>
@@ -191,8 +206,8 @@ function Users() {
       <div className="toolbar">
         <Field label={t("common.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
         <Select label={t("admin.users")} value={status} onChange={(v) => setStatus(v as "" | AccountStatus)}
-          options={[{ value: "", label: t("common.all") }, { value: "pending", label: t("admin.usersPending") },
-            { value: "active", label: t("admin.usersActive") }, { value: "blocked", label: t("admin.usersBlocked") }]} />
+          options={[{ value: "", label: t("common.all") }, { value: "active", label: t("admin.usersActive") },
+            { value: "blocked", label: t("admin.usersBlocked") }]} />
       </div>
       {failed ? <ErrorState onRetry={load} /> : !data ? <LoadingState /> : data.length === 0
         ? <EmptyState icon={<IconUsers />} text={t("admin.noUsers")} /> : (
@@ -212,7 +227,6 @@ function Users() {
                 </div>
                 {u.role !== "admin" && (
                   <div className="row gap-sm wrap end">
-                    {u.status === "pending" && <Button loading={busy === u.id} onClick={() => setUserStatus(u, "active")}>{t("admin.approve")}</Button>}
                     {u.status === "blocked"
                       ? <Button variant="secondary" loading={busy === u.id} onClick={() => setUserStatus(u, "active")}>{t("admin.unblock")}</Button>
                       : <Button variant="ghost" className="danger-text" onClick={() => setBlocking(u)}>{t("admin.block")}</Button>}

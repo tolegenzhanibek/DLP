@@ -36,8 +36,8 @@ exception when sqlstate '22023' then raise notice 'OK foreign avatar rejected'; 
 do $$ begin perform public.update_my_profile('{"nickname":"bob"}'); raise exception 'dup nick ok';
 exception when sqlstate '23505' then raise notice 'OK duplicate nickname rejected'; end $$;
 select 'verify pw', public.verify_my_password('Password1!') ok, public.verify_my_password('nope') bad;
-do $$ begin perform public.confirm_scan(gen_random_uuid()); raise exception 'pending user acted';
-exception when insufficient_privilege then raise notice 'OK pending user cannot act on scans'; end $$;
+do $$ begin perform public.confirm_scan(gen_random_uuid()); raise exception 'unknown scan confirmed';
+exception when sqlstate '22023' then raise notice 'OK unknown scan cannot be confirmed'; end $$;
 do $$ begin perform public.resolve_login_email('bob'); raise exception 'resolve exposed';
 exception when insufficient_privilege then raise notice 'OK resolve_login_email not exposed'; end $$;
 do $$ begin perform public.admin_stats(); raise exception 'admin open';
@@ -113,4 +113,17 @@ set role authenticated;
 select set_config('request.jwt.claims','{"sub":"66666666-6666-6666-6666-666666666666","aal":"aal1"}',false);
 select set_config('request.jwt.claim.sub','66666666-6666-6666-6666-666666666666',false);
 select 'oauth complete without phone', (public.complete_my_profile('ghuser'))->>'needs_setup' needs_setup;
+reset role;
+
+-- 0008: new sign-ups are active immediately
+insert into auth.users (id, email, raw_user_meta_data) values ('77777777-7777-7777-7777-777777777777', 'open@x.kz', '{"nickname":"opensignup"}');
+select 'open signup status', status from public.profiles where nickname = 'opensignup';
+
+-- blocked users cannot act
+update public.profiles set status = 'blocked' where nickname = 'opensignup';
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"77777777-7777-7777-7777-777777777777","aal":"aal1"}',false);
+select set_config('request.jwt.claim.sub','77777777-7777-7777-7777-777777777777',false);
+do $$ begin perform public.confirm_scan(gen_random_uuid()); raise exception 'blocked user acted';
+exception when insufficient_privilege then raise notice 'OK blocked user cannot act on scans'; end $$;
 reset role;

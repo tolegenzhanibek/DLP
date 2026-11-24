@@ -314,7 +314,10 @@
     "enabled": "Enabled",
     "noRules": "No rules yet",
     "deleteRule": "Delete this rule?",
-    "usersActive": "Active"
+    "usersActive": "Active",
+    "usersNew7d": "New (7 days)",
+    "usersActive7d": "Active (7 days)",
+    "signups14d": "Sign-ups, last 14 days"
   },
   "pages": {
     "notFoundTitle": "Page not found",

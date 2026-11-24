@@ -314,7 +314,10 @@
     "enabled": "Включено",
     "noRules": "Правил пока нет",
     "deleteRule": "Удалить это правило?",
-    "usersActive": "Активные"
+    "usersActive": "Активные",
+    "usersNew7d": "Новые (7 дней)",
+    "usersActive7d": "Активные (7 дней)",
+    "signups14d": "Регистрации за 14 дней"
   },
   "pages": {
     "notFoundTitle": "Страница не найдена",
