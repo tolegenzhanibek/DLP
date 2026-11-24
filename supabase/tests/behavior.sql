@@ -80,3 +80,17 @@ select 'users', count(*) from public.admin_list_users(null,null);
 reset role;
 select kind, user_id from public.notifications order by created_at;
 select 'sheets calls total', count(*) from net.calls;
+
+-- OAuth sign-up (no nickname / phone in metadata) -> needs_setup
+insert into auth.users (id, email, email_confirmed_at, raw_user_meta_data) values
+ ('44444444-4444-4444-4444-444444444444', 'g@gmail.com', now(), '{"full_name":"Google User","avatar_url":"https://x"}');
+select 'oauth profile', nickname like 'user_%' tmp_nick, display_name, needs_setup from public.profiles where id = '44444444-4444-4444-4444-444444444444';
+set role authenticated;
+select set_config('request.jwt.claims','{"sub":"44444444-4444-4444-4444-444444444444","aal":"aal1"}',false);
+select set_config('request.jwt.claim.sub','44444444-4444-4444-4444-444444444444',false);
+do $$ begin perform public.complete_my_profile('bob', '+77011112233'); raise exception 'dup nick ok';
+exception when sqlstate '23505' then raise notice 'OK complete_my_profile rejects taken nickname'; end $$;
+do $$ begin perform public.complete_my_profile('googler', '12'); raise exception 'bad phone ok';
+exception when sqlstate '22023' then raise notice 'OK complete_my_profile rejects bad phone'; end $$;
+select 'completed', (public.complete_my_profile('Googler', '+7 702 000 11 22'))->>'needs_setup' needs_setup;
+reset role;

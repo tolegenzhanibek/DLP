@@ -27,6 +27,7 @@ export interface Profile {
   online_visibility: Visibility;
   push_enabled: boolean;
   onboarded_at: string | null;
+  needs_setup: boolean;
   last_seen_at: string | null;
   created_at: string;
 }

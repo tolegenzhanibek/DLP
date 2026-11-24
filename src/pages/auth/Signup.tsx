@@ -6,6 +6,7 @@ import { Button, Field, PasswordField } from "../../components/ui";
 import { errorText } from "../../lib/errors";
 import { EMAIL_RE, NICK_RE, normalizePhone, PHONE_RE } from "../../lib/format";
 import { SITE_URL, supabase } from "../../lib/supabase";
+import { OAuthButtons } from "../../components/OAuthButtons";
 import { AuthCard } from "./AuthCard";
 
 type NickState = "idle" | "checking" | "free" | "taken" | "invalid";
@@ -84,6 +85,7 @@ export default function Signup() {
       title={t("auth.signupTitle")}
       footer={<>{t("auth.haveAccount")} <Link to="/login">{t("auth.loginCta")}</Link></>}
     >
+      <OAuthButtons />
       <form onSubmit={submit} noValidate className="stack">
         <Field label={t("auth.nickname")} value={nickname} autoComplete="username" autoCapitalize="off"
           onChange={(e) => setNickname(e.target.value)} status={nickStatus}

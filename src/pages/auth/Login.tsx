@@ -5,6 +5,7 @@ import { Captcha, captchaRequired, type CaptchaHandle } from "../../components/C
 import { Button, Field, PasswordField } from "../../components/ui";
 import { errorText } from "../../lib/errors";
 import { callFunction, supabase } from "../../lib/supabase";
+import { OAuthButtons } from "../../components/OAuthButtons";
 import { AuthCard } from "./AuthCard";
 
 export default function Login() {
@@ -48,6 +49,7 @@ export default function Login() {
       title={t("auth.loginTitle")}
       footer={<>{t("auth.noAccount")} <Link to="/signup">{t("auth.signupCta")}</Link></>}
     >
+      <OAuthButtons />
       <form onSubmit={submit} noValidate className="stack">
         <Field label={t("auth.identifier")} value={identifier} autoComplete="username" autoCapitalize="off"
           onChange={(e) => setIdentifier(e.target.value)} />

@@ -51,6 +51,7 @@ export function RequireActive() {
   if (loading || (session && !profile)) return <div className="fullscreen"><LoadingState /></div>;
   if (!session) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
   if (profile!.status === "blocked") return <Navigate to="/blocked" replace />;
+  if (profile!.needs_setup) return <Navigate to="/complete-profile" replace />;
   if (profile!.status === "pending") return <Navigate to="/pending" replace />;
   return <Outlet />;
 }
