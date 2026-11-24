@@ -42,7 +42,6 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
   const items = [
     { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
     { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history" },
-    { to: "/settings", label: t("nav.settings"), icon: <IconSettings />, tour: "nav-settings" },
     ...(profile?.role === "admin" ? [{ to: "/admin", label: t("nav.admin"), icon: <IconShield />, tour: "nav-admin" }] : []),
   ];
   const name = profile?.display_name || profile?.nickname || "";
@@ -81,10 +80,16 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
           ))
         )}
       </div>
-      <Link to="/profile" className="side-user" onClick={onNavigate}>
-        <Avatar url={profile?.avatar_url} name={name} size={32} />
-        <span className="truncate">{name}</span>
-      </Link>
+      <div className="side-bottom">
+        <Link to="/profile" className="side-user" onClick={onNavigate}>
+          <Avatar url={profile?.avatar_url} name={name} size={32} />
+          <span className="truncate">{name}</span>
+        </Link>
+        <NavLink to="/settings" className="icon-btn side-settings" data-tour="nav-settings" onClick={onNavigate}
+          aria-label={t("nav.settings")} title={t("nav.settings")}>
+          <IconSettings />
+        </NavLink>
+      </div>
     </>
   );
 }
