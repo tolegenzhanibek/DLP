@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { AppShell, PublicShell, RedirectIfAuthed, RequireActive } from "./components/Layout";
+import { AppShell, PublicShell, RedirectIfAuthed, RequireActive, UserOnly } from "./components/Layout";
 import { LoadingState } from "./components/ui";
 import { AuthProvider } from "./lib/auth";
 import Landing from "./pages/Landing";
@@ -45,10 +45,12 @@ export default function App() {
             </Route>
             <Route element={<RequireActive />}>
               <Route element={<AppShell />}>
-                <Route path="/app" element={<Scans />} />
-                <Route path="/app/scans/:id" element={<ScanDetail />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/notifications" element={<Notifications />} />
+                <Route element={<UserOnly />}>
+                  <Route path="/app" element={<Scans />} />
+                  <Route path="/app/scans/:id" element={<ScanDetail />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                </Route>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/u/:nickname" element={<PublicProfile />} />
                 <Route path="/settings" element={<Settings />} />

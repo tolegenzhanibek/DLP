@@ -654,3 +654,4 @@ a { color: var(--text); }
 .side-bottom { display: flex; align-items: center; gap: 4px; margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
 .side-bottom .side-user { flex: 1; min-width: 0; margin-top: 0; border-top: 0; }
 .side-settings.active { background: var(--hover); color: var(--text); }
+.side-spacer { flex: 1; }
