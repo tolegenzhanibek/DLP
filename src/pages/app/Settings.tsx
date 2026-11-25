@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { IconChevron, IconLogout } from "../../components/icons";
-import { Button, ErrorState, LoadingState, Modal, PasswordField, Segmented, toast } from "../../components/ui";
+import { Link, Navigate, NavLink, useNavigate, useParams } from "react-router-dom";
+import {
+  IconArrowLeft, IconArrowUpRight, IconChevron, IconEdit, IconKey, IconLogout, IconSettings, IconSun, IconUser,
+} from "../../components/icons";
+import { Avatar, Button, ErrorState, Field, LoadingState, Modal, PasswordField, toast } from "../../components/ui";
 import { setLanguage, type Lang } from "../../i18n";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
-import { fmtDateTime } from "../../lib/format";
+import { fmtDate, fmtDateTime } from "../../lib/format";
 import { supabase } from "../../lib/supabase";
 import { setTheme } from "../../lib/theme";
 import type { Profile, Theme } from "../../lib/types";
@@ -29,52 +31,177 @@ function deviceName(ua: string | null, fallback: string) {
   return [br, os].filter(Boolean).join(" · ") || fallback;
 }
 
+type Section = "security" | "account" | "general" | "appearance";
+const SECTIONS: Section[] = ["security", "account", "general", "appearance"];
+
+/** ChatGPT-style settings: its own left navigation and one section per page. */
 export default function Settings() {
   const { t } = useTranslation();
-  const nav = useNavigate();
-  const { profile, patchProfile, signOut } = useAuth();
-  const [pwOpen, setPwOpen] = useState(false);
+  const { section } = useParams();
+  const { profile } = useAuth();
+  if (!profile) return <div className="fullscreen"><LoadingState /></div>;
+  if (section && !SECTIONS.includes(section as Section)) return <Navigate to="/settings" replace />;
+  const current = (section as Section | undefined) ?? "account";
+  const name = profile.display_name || profile.nickname;
+  const home = profile.role === "admin" ? "/admin" : "/app";
+  const icons: Record<Section, ReactNode> = {
+    security: <IconKey />, account: <IconUser />, general: <IconSettings />, appearance: <IconSun />,
+  };
+  const item = (s: Section) => (
+    <NavLink key={s} to={`/settings/${s}`} className={`side-item${!section && s === "account" ? " index-active" : ""}`}>
+      {icons[s]}<span>{t(`settings.s_${s}`)}</span>
+    </NavLink>
+  );
 
-  const save = useCallback(async (patch: Partial<Profile>) => {
+  return (
+    <div className={`settings-shell${section ? " has-section" : ""}`}>
+      <aside className="settings-nav">
+        <Link to={home} className="side-item settings-back"><IconArrowLeft /><span>{t("settings.back")}</span></Link>
+        <div className="side-label">{t("nav.profile")}</div>
+        <Link to="/profile" className="side-item">
+          <Avatar url={profile.avatar_url} name={name} size={24} /><span className="truncate">{name}</span>
+          <IconArrowUpRight className="muted settings-ext" />
+        </Link>
+        <div className="side-label">{t("settings.g_account")}</div>
+        {item("security")}{item("account")}
+        <div className="side-label">{t("settings.g_app")}</div>
+        {item("general")}{item("appearance")}
+      </aside>
+      <main className="settings-main">
+        <Link to="/settings" className="settings-mback"><IconArrowLeft /><span>{t("settings.title")}</span></Link>
+        <header className="settings-head">
+          <h1>{t(`settings.s_${current}`)}</h1>
+          <p className="muted">{t(`settings.d_${current}`)}</p>
+        </header>
+        {current === "security" && <Security />}
+        {current === "account" && <Account profile={profile} />}
+        {current === "general" && <General profile={profile} />}
+        {current === "appearance" && <Appearance profile={profile} />}
+      </main>
+    </div>
+  );
+}
+
+function useSave() {
+  const { t } = useTranslation();
+  const { patchProfile } = useAuth();
+  return useCallback(async (patch: Partial<Profile>) => {
     patchProfile(patch); // optimistic merge
     const { error } = await supabase.rpc("update_my_settings", { p: patch });
     if (error) toast(errorText(t, error), "error");
   }, [patchProfile, t]);
+}
 
-  if (!profile) return <LoadingState />;
+function Row({ title, desc, children, onClick }: { title: string; desc?: string; children?: ReactNode; onClick?: () => void }) {
+  const body = (
+    <>
+      <div className="srow-text"><b>{title}</b>{desc && <span className="muted">{desc}</span>}</div>
+      <div className="srow-value">{children}</div>
+    </>
+  );
+  return onClick
+    ? <button type="button" className="srow clickable" onClick={onClick}>{body}</button>
+    : <div className="srow">{body}</div>;
+}
 
-  // Everything lives in one card, separated only by thin dividers.
+function Security() {
+  const { t } = useTranslation();
+  const { signOut } = useAuth();
+  const [pwOpen, setPwOpen] = useState(false);
   return (
-    <div className="page">
-      <header className="page-head"><h1>{t("settings.title")}</h1></header>
-
-      <div className="card settings-card">
-        <div className="setting">
-          <span>{t("settings.theme")}</span>
-          <Segmented<Theme> label={t("settings.theme")} value={profile.theme}
-            onChange={(v) => { setTheme(v); void save({ theme: v }); }}
-            options={(["light", "dark", "system"] as Theme[]).map((v) => ({ value: v, label: t(`settings.${v}`) }))} />
-        </div>
-        <div className="setting">
-          <span>{t("settings.language")}</span>
-          <Segmented<Lang> label={t("settings.language")} value={profile.language}
-            onChange={(v) => { setLanguage(v); void save({ language: v }); }}
-            options={[{ value: "kk", label: "Қазақша" }, { value: "ru", label: "Русский" }, { value: "en", label: "English" }]} />
-        </div>
-        <button type="button" className="setting-row" onClick={() => nav("/app?tour=1")}>
-          <span>{t("settings.tour")}</span><IconChevron className="muted" />
-        </button>
-        <button type="button" className="setting-row" onClick={() => setPwOpen(true)}>
-          <span>{t("settings.changePassword")}</span><IconChevron className="muted" />
-        </button>
-        <Sessions />
-        <button type="button" className="setting-row" onClick={signOut}>
-          <span className="row gap-sm"><IconLogout /> {t("settings.signOut")}</span>
-        </button>
-      </div>
-
+    <>
+      <section className="sgroup">
+        <h2>{t("settings.signInMethods")}</h2>
+        <Row title={t("settings.password")} desc={t("settings.passwordDesc")} onClick={() => setPwOpen(true)}>
+          <span>{t("settings.change")}</span><IconChevron />
+        </Row>
+      </section>
+      <Sessions />
+      <section className="sgroup">
+        <Row title={t("settings.signOut")} desc={t("settings.signOutDesc")}>
+          <Button variant="secondary" onClick={signOut}><IconLogout /> {t("settings.signOut")}</Button>
+        </Row>
+      </section>
       {pwOpen && <ChangePassword onClose={() => setPwOpen(false)} />}
-    </div>
+    </>
+  );
+}
+
+function Account({ profile }: { profile: Profile }) {
+  const { t } = useTranslation();
+  const { patchProfile } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(profile.display_name ?? "");
+  const [busy, setBusy] = useState(false);
+
+  async function saveName() {
+    setBusy(true);
+    const { data, error } = await supabase.rpc("update_my_profile", { p: { display_name: name } });
+    setBusy(false);
+    if (error) return toast(errorText(t, error), "error");
+    patchProfile(data as Profile);
+    setEditing(false);
+  }
+
+  return (
+    <section className="sgroup">
+      <h2>{t("settings.details")}</h2>
+      <Row title={t("profile.displayName")} desc={t("settings.nameDesc")}>
+        <span className="truncate">{profile.display_name || "—"}</span>
+        <button type="button" className="icon-btn" aria-label={t("profile.displayName")}
+          onClick={() => { setName(profile.display_name ?? ""); setEditing(true); }}><IconEdit /></button>
+      </Row>
+      <Row title={t("auth.nickname")} desc={t("settings.nicknameDesc")}><span>@{profile.nickname}</span></Row>
+      {profile.email && <Row title={t("auth.email")} desc={t("settings.emailDesc")}><span className="truncate">{profile.email}</span></Row>}
+      <Row title={t("settings.memberSince")} desc={t("settings.memberSinceDesc")}><span>{fmtDate(profile.created_at)}</span></Row>
+      <Modal open={editing} title={t("profile.displayName")} onClose={() => setEditing(false)} onDone={saveName} doneLoading={busy}>
+        <Field label={t("profile.displayName")} value={name} maxLength={60} autoFocus onChange={(e) => setName(e.target.value)} />
+      </Modal>
+    </section>
+  );
+}
+
+function General({ profile }: { profile: Profile }) {
+  const { t } = useTranslation();
+  const nav = useNavigate();
+  const save = useSave();
+  return (
+    <section className="sgroup">
+      <Row title={t("settings.language")} desc={t("settings.languageDesc")}>
+        <select className="pill-select" aria-label={t("settings.language")} value={profile.language}
+          onChange={(e) => { const v = e.target.value as Lang; setLanguage(v); void save({ language: v }); }}>
+          <option value="kk">Қазақша</option><option value="ru">Русский</option><option value="en">English</option>
+        </select>
+      </Row>
+      {profile.role !== "admin" && (
+        <Row title={t("settings.tour")} desc={t("settings.tourDesc")} onClick={() => nav("/app?tour=1")}>
+          <IconChevron />
+        </Row>
+      )}
+    </section>
+  );
+}
+
+function Appearance({ profile }: { profile: Profile }) {
+  const { t } = useTranslation();
+  const save = useSave();
+  return (
+    <section className="sgroup">
+      <h2>{t("settings.visual")}</h2>
+      <div className="srow srow-wrap">
+        <div className="srow-text"><b>{t("settings.theme")}</b><span className="muted">{t("settings.themeDesc")}</span></div>
+        <div className="theme-cards" role="radiogroup" aria-label={t("settings.theme")}>
+          {(["system", "light", "dark"] as Theme[]).map((v) => (
+            <button key={v} type="button" role="radio" aria-checked={profile.theme === v} aria-label={t(`settings.${v}`)}
+              title={t(`settings.${v}`)} className={`theme-card theme-${v}${profile.theme === v ? " active" : ""}`}
+              onClick={() => { setTheme(v); void save({ theme: v }); }}>
+              <span className="tc-preview"><span className="tc-side" /><span className="tc-line l1" /><span className="tc-line l2" /><span className="tc-line l3" /></span>
+              <span className="tc-label">{t(`settings.${v}`)}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -105,8 +232,8 @@ function Sessions() {
   }
 
   return (
-    <div className="setting">
-      <span>{t("settings.sessions")}</span>
+    <section className="sgroup">
+      <h2>{t("settings.sessions")}</h2>
       {failed ? <ErrorState onRetry={load} /> : rows === null ? <LoadingState /> : (
         <div className="session-list">
           {rows.map((s) => (
@@ -125,7 +252,7 @@ function Sessions() {
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }
 

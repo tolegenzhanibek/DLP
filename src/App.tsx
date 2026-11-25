@@ -44,6 +44,7 @@ export default function App() {
               <Route path="/blocked" element={<Blocked />} />
             </Route>
             <Route element={<RequireActive />}>
+              <Route path="/settings/:section?" element={<Settings />} />
               <Route element={<AppShell />}>
                 <Route element={<UserOnly />}>
                   <Route path="/app" element={<Scans />} />
@@ -53,7 +54,6 @@ export default function App() {
                 </Route>
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/u/:nickname" element={<PublicProfile />} />
-                <Route path="/settings" element={<Settings />} />
                 <Route path="/admin" element={<Admin page="overview" />} />
                 <Route path="/admin/users" element={<Admin page="users" />} />
               </Route>
