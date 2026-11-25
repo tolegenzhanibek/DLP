@@ -23,9 +23,6 @@ function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
   const input = useRef<HTMLInputElement>(null);
   const [crop, setCrop] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
-  const [viewing, setViewing] = useState(false);
-  const closeViewer = useCallback(() => setViewing(false), []);
-
   async function upload(blob: Blob) {
     setCrop(null);
     if (!profile) return;
@@ -42,20 +39,14 @@ function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
 
   return (
     <>
-      <span className={`avatar-picker${busy ? " busy" : ""}`}>
-        {url ? (
-          <button type="button" className="avatar-open" aria-label={t("profile.photo")} onClick={() => setViewing(true)}>
-            <Avatar url={url} name={name} size={size} />
-          </button>
-        ) : <Avatar url={url} name={name} size={size} />}
-        <button type="button" className="avatar-cam" aria-label={label} disabled={busy} onClick={() => input.current?.click()}>
-          {busy ? <span className="spinner spinner-sm" /> : <IconCamera />}
-        </button>
-      </span>
+      <button type="button" className={`avatar-picker${busy ? " busy" : ""}`} aria-label={label} disabled={busy}
+        onClick={() => input.current?.click()}>
+        <Avatar url={url} name={name} size={size} />
+        <span className="avatar-cam" aria-hidden="true">{busy ? <span className="spinner spinner-sm" /> : <IconCamera />}</span>
+      </button>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden
         onChange={(e) => { const file = e.target.files?.[0]; if (file) setCrop(file); e.target.value = ""; }} />
       {crop && <AvatarCropper file={crop} onCancel={() => setCrop(null)} onDone={upload} />}
-      {viewing && url && <PhotoViewer url={url} onClose={closeViewer} />}
     </>
   );
 }
