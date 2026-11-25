@@ -68,7 +68,8 @@ select 'admin without TOTP allowed (0009)', (public.admin_stats() ? 'users_total
 select 'admin aal1 sees scans', count(*) from public.scans;
 -- admin WITH mfa
 select set_config('request.jwt.claims','{"sub":"33333333-3333-3333-3333-333333333333","aal":"aal2"}',false);
-select 'stats', public.admin_stats()->>'disputes_open' disputes, public.admin_stats()->>'users_pending' pending;
+select 'stats daily (0010)', jsonb_array_length(public.admin_stats(7)->'daily') d7, jsonb_array_length(public.admin_stats(1000)->'daily') clamp90,
+  (public.admin_stats()->'daily'->-1->>'scans')::int today_scans, public.admin_stats()->>'days' def_days;
 select 'admin sees scans', count(*) from public.scans;
 select 'resolve', (public.admin_resolve_scan((select id from public.scans limit 1), true, 'ok')).final_level;
 select public.admin_set_user_status('11111111-1111-1111-1111-111111111111','active');

@@ -54,7 +54,8 @@ export default function App() {
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/u/:nickname" element={<PublicProfile />} />
                 <Route path="/settings" element={<Settings />} />
-                <Route path="/admin" element={<Admin />} />
+                <Route path="/admin" element={<Admin page="overview" />} />
+                <Route path="/admin/users" element={<Admin page="users" />} />
               </Route>
             </Route>
             <Route element={<PublicShell />}>

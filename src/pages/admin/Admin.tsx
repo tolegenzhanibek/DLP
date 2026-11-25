@@ -1,41 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate } from "react-router-dom";
+import { Donut, TimeChart, type Point } from "../../components/charts";
 import { IconUsers } from "../../components/icons";
 import {
-  Avatar, Button, EmptyState, ErrorState, Field, LevelBadge, LoadingState, Modal, ReviewBadge, Segmented, Select,
-  TextArea, Toggle, toast,
+  Avatar, Button, EmptyState, ErrorState, Field, LevelBadge, LoadingState, Modal, Segmented, Select, TextArea, toast,
 } from "../../components/ui";
+import i18n from "../../i18n";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
-import { fmtDate, fmtDateTime, isOnline } from "../../lib/format";
+import { fmtDate, isOnline } from "../../lib/format";
 import { supabase } from "../../lib/supabase";
-import { LEVELS, type AccountStatus, type Finding, type Level, type ReviewStatus } from "../../lib/types";
+import { LEVELS, type AccountStatus, type Level } from "../../lib/types";
 
-type Tab = "overview" | "users" | "reviews" | "rules";
-
-/** Admin area: user analytics and moderation. Requires role = admin (enforced in the DB too). */
-export default function Admin() {
+/** Admin area (analytics only): /admin = overview, /admin/users = users. Role is enforced in the DB too. */
+export default function Admin({ page }: { page: "overview" | "users" }) {
   const { profile } = useAuth();
   if (profile?.role !== "admin") return <Navigate to="/app" replace />;
-  return <AdminPanel />;
-}
-
-function AdminPanel() {
-  const { t } = useTranslation();
-  const [params, setParams] = useSearchParams();
-  const tab = (params.get("tab") as Tab) || "overview";
-  return (
-    <div className="page wide">
-      <header className="page-head"><h1>{t("admin.title")}</h1></header>
-      <Segmented<Tab> label={t("admin.title")} value={tab} onChange={(v) => setParams({ tab: v }, { replace: true })}
-        options={(["overview", "users", "reviews", "rules"] as Tab[]).map((v) => ({ value: v, label: t(`admin.${v}`) }))} />
-      {tab === "overview" && <Overview />}
-      {tab === "users" && <Users />}
-      {tab === "reviews" && <Reviews />}
-      {tab === "rules" && <Rules />}
-    </div>
-  );
+  return page === "users" ? <Users /> : <Overview />;
 }
 
 function useRpc<T>(fn: string, args?: Record<string, unknown>) {
@@ -54,50 +36,87 @@ function useRpc<T>(fn: string, args?: Record<string, unknown>) {
   return { data, failed, load, setData };
 }
 
+interface Day { day: string; signups: number; scans: number; active: number }
+interface Stats {
+  days: number; users_total: number; users_new_7d: number; users_active_7d: number; users_blocked: number;
+  scans_total: number; scans_7d: number; ai_unavailable: number;
+  by_level: Partial<Record<Level, number>>; daily: Day[];
+}
+type Range = "7" | "14" | "30";
+
+const shortDay = (iso: string) => {
+  const d = new Date(`${iso}T00:00:00`);
+  return i18n.language === "kk"
+    ? `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`
+    : new Intl.DateTimeFormat(i18n.language === "ru" ? "ru-RU" : "en-GB", { day: "numeric", month: "short" }).format(d);
+};
+
 function Overview() {
   const { t } = useTranslation();
-  const { data, failed, load } = useRpc<Record<string, number> & {
-    by_level: Partial<Record<Level, number>>; signups_14d: { day: string; n: number }[];
-  }>("admin_stats");
-  if (failed) return <ErrorState onRetry={load} />;
-  if (!data) return <LoadingState />;
-  const tiles: [string, number][] = [
-    [t("admin.usersTotal"), data.users_total], [t("admin.usersNew7d"), data.users_new_7d],
-    [t("admin.usersActive7d"), data.users_active_7d], [t("admin.scansTotal"), data.scans_total],
-    [t("admin.scans7d"), data.scans_7d], [t("admin.disputesOpen"), data.disputes_open],
-    [t("admin.usersBlocked"), data.users_blocked], [t("admin.aiUnavailable"), data.ai_unavailable],
-  ];
-  const max = Math.max(1, ...LEVELS.map((l) => data.by_level?.[l] ?? 0));
-  const days = data.signups_14d ?? [];
-  const maxDay = Math.max(1, ...days.map((d) => d.n));
+  const [range, setRange] = useState<Range>(() => {
+    try {
+      return (localStorage.getItem("admin-range") as Range) || "14";
+    } catch {
+      return "14";
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("admin-range", range);
+    } catch {
+      /* ignore */
+    }
+  }, [range]);
+  const { data, failed, load } = useRpc<Stats>("admin_stats", { p_days: Number(range) });
+
+  const series = (k: "signups" | "scans" | "active"): Point[] =>
+    (data?.daily ?? []).map((d) => ({ label: shortDay(d.day), full: fmtDate(d.day), value: d[k] }));
+  const sum = (k: "signups" | "scans" | "active") => (data?.daily ?? []).reduce((s, d) => s + d[k], 0);
+  const levelTotal = LEVELS.reduce((s, l) => s + (data?.by_level?.[l] ?? 0), 0);
+
   return (
-    <div className="stack">
-      <div className="tiles">
-        {tiles.map(([label, n]) => <div key={label} className="card tile"><span className="muted small">{label}</span><b>{n}</b></div>)}
-      </div>
-      <div className="card">
-        <h3>{t("admin.signups14d")}</h3>
-        <div className="spark" role="img" aria-label={t("admin.signups14d")}>
-          {days.map((d) => (
-            <div key={d.day} className="spark-col" title={`${fmtDate(d.day)}: ${d.n}`}>
-              <span className="spark-n">{d.n || ""}</span>
-              <span className="spark-bar" style={{ height: `${(d.n / maxDay) * 100}%` }} />
-            </div>
-          ))}
+    <div className="page wide">
+      <header className="page-head">
+        <h1>{t("admin.overview")}</h1>
+        <Segmented<Range> label={t("admin.period")} value={range} onChange={setRange}
+          options={(["7", "14", "30"] as Range[]).map((v) => ({ value: v, label: t("admin.days", { count: Number(v) }) }))} />
+      </header>
+      {failed ? <ErrorState onRetry={load} /> : !data ? <LoadingState /> : (
+        <div className="stack">
+          <div className="tiles">
+            {([
+              [t("admin.usersTotal"), data.users_total], [t("admin.usersNew7d"), data.users_new_7d],
+              [t("admin.usersActive7d"), data.users_active_7d], [t("admin.scansTotal"), data.scans_total],
+              [t("admin.scans7d"), data.scans_7d], [t("admin.usersBlocked"), data.users_blocked],
+            ] as [string, number][]).map(([label, n]) => (
+              <div key={label} className="card tile"><span className="muted small">{label}</span><b>{n}</b></div>
+            ))}
+          </div>
+          <div className="chart-grid-2">
+            <section className="card chart-card">
+              <div className="chart-head"><h3>{t("admin.chartSignups")}</h3><b>{sum("signups")}</b></div>
+              <TimeChart data={series("signups")} label={t("admin.chartSignups")} unit={(n) => t("admin.nUsers", { count: n })} />
+            </section>
+            <section className="card chart-card">
+              <div className="chart-head"><h3>{t("admin.chartActive")}</h3></div>
+              <TimeChart kind="line" data={series("active")} label={t("admin.chartActive")} unit={(n) => t("admin.nUsers", { count: n })} />
+            </section>
+            <section className="card chart-card">
+              <div className="chart-head"><h3>{t("admin.chartScans")}</h3><b>{sum("scans")}</b></div>
+              <TimeChart data={series("scans")} label={t("admin.chartScans")} unit={(n) => t("admin.scansCount", { count: n })} />
+            </section>
+            <section className="card chart-card">
+              <div className="chart-head"><h3>{t("admin.byLevel")}</h3></div>
+              <Donut label={t("admin.byLevel")}
+                center={<><b>{levelTotal}</b><span className="muted small">{t("admin.inPeriod")}</span></>}
+                slices={LEVELS.map((l) => ({
+                  key: l, label: <LevelBadge level={l} />, text: t(`levels.${l}`), value: data.by_level?.[l] ?? 0, color: `var(--lvc-${l})`,
+                }))} />
+            </section>
+          </div>
+          {data.ai_unavailable > 0 && <p className="muted small">{t("admin.aiUnavailable")}: {data.ai_unavailable}</p>}
         </div>
-      </div>
-      <div className="card">
-        <h3>{t("admin.byLevel")}</h3>
-        <div className="bars">
-          {LEVELS.map((l) => (
-            <div key={l} className="bar-row">
-              <LevelBadge level={l} />
-              <div className="bar"><span className={`level-${l}`} style={{ width: `${((data.by_level?.[l] ?? 0) / max) * 100}%` }} /></div>
-              <b>{data.by_level?.[l] ?? 0}</b>
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -134,10 +153,11 @@ function Users() {
   }
 
   return (
-    <div className="stack">
+    <div className="page wide">
+      <header className="page-head"><h1>{t("admin.users")}</h1></header>
       <div className="toolbar">
         <Field label={t("common.search")} value={search} onChange={(e) => setSearch(e.target.value)} />
-        <Select label={t("admin.users")} value={status} onChange={(v) => setStatus(v as "" | AccountStatus)}
+        <Select label={t("admin.statusFilter")} value={status} onChange={(v) => setStatus(v as "" | AccountStatus)}
           options={[{ value: "", label: t("common.all") }, { value: "active", label: t("admin.usersActive") },
             { value: "blocked", label: t("admin.usersBlocked") }]} />
       </div>
@@ -171,159 +191,6 @@ function Users() {
       <Modal open={Boolean(blocking)} title={t("admin.block")} onClose={() => setBlocking(null)} doneLabel={t("admin.block")}
         onDone={() => blocking && setUserStatus(blocking, "blocked", reason)} doneLoading={Boolean(busy)}>
         <TextArea label={t("admin.blockReason")} value={reason} maxLength={300} rows={3} onChange={(e) => setReason(e.target.value)} />
-      </Modal>
-    </div>
-  );
-}
-
-interface ScanRow {
-  id: string; owner_nickname: string; file_name: string; final_level: Level; rule_level: Level; ai_level: Level | null;
-  ai_status: string; review_status: ReviewStatus; user_suggested_level: Level | null; user_comment: string | null;
-  categories: string[]; findings: Finding[]; summary: string | null; created_at: string;
-}
-
-function Reviews() {
-  const { t } = useTranslation();
-  const [status, setStatus] = useState<ReviewStatus>("disputed");
-  const { data, failed, load } = useRpc<ScanRow[]>("admin_list_scans", { p_status: status });
-  const [comments, setComments] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState<string | null>(null);
-
-  async function resolve(s: ScanRow, accept: boolean) {
-    setBusy(s.id);
-    const { error } = await supabase.rpc("admin_resolve_scan", { p_scan: s.id, p_accept: accept, p_comment: comments[s.id] ?? null });
-    setBusy(null);
-    if (error) return toast(errorText(t, error), "error");
-    void load();
-  }
-
-  return (
-    <div className="stack">
-      <div className="filters">
-        {(["disputed", "pending", "confirmed", "rejected"] as ReviewStatus[]).map((f) => (
-          <button key={f} type="button" className={`chip-btn${status === f ? " active" : ""}`} onClick={() => setStatus(f)}>
-            {t(`review.${f}`)}
-          </button>
-        ))}
-      </div>
-      {failed ? <ErrorState onRetry={load} /> : !data ? <LoadingState /> : data.length === 0
-        ? <EmptyState text={t("admin.noDisputes")} /> : data.map((s) => (
-          <div key={s.id} className="card stack review-card">
-            <div className="result-head">
-              <div className="result-title">
-                <h3 className="truncate">{s.file_name}</h3>
-                <span className="muted small">@{s.owner_nickname} · {fmtDateTime(s.created_at)}</span>
-              </div>
-              <ReviewBadge status={s.review_status} />
-            </div>
-            <div className="row gap-sm wrap">
-              <LevelBadge level={s.final_level} />
-              {s.user_suggested_level && <>→ <LevelBadge level={s.user_suggested_level} /></>}
-            </div>
-            <span className="muted small">{t("scan.ruleLevel")}: {t(`levels.${s.rule_level}`)}
-              {s.ai_level ? ` · ${t("scan.aiLevel")}: ${t(`levels.${s.ai_level}`)}` : ""}</span>
-            {s.summary && <p>{s.summary}</p>}
-            {s.findings.length > 0 && (
-              <div className="chips">
-                {s.findings.map((f, i) => <span key={i} className="chip">{t(`findingTypes.${f.type}`, { rule: f.rule ?? "" })} ×{f.count}</span>)}
-              </div>
-            )}
-            {s.user_comment && <p className="note">“{s.user_comment}”</p>}
-            {s.review_status === "disputed" && (
-              <>
-                <TextArea label={t("admin.comment")} rows={2} maxLength={500} value={comments[s.id] ?? ""}
-                  onChange={(e) => setComments({ ...comments, [s.id]: e.target.value })} />
-                <div className="row gap-sm">
-                  <Button loading={busy === s.id} onClick={() => resolve(s, true)}>{t("admin.accept")}</Button>
-                  <Button variant="secondary" disabled={busy === s.id} onClick={() => resolve(s, false)}>{t("admin.reject")}</Button>
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-    </div>
-  );
-}
-
-interface Rule { id: string; name: string; keywords: string[]; level: Level; enabled: boolean }
-
-function Rules() {
-  const { t } = useTranslation();
-  const [rules, setRules] = useState<Rule[] | null>(null);
-  const [failed, setFailed] = useState(false);
-  const [edit, setEdit] = useState<Partial<Rule> & { kw?: string } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    setFailed(false);
-    const { data, error } = await supabase.from("policy_rules").select("id,name,keywords,level,enabled").order("created_at");
-    if (error) return setFailed(true);
-    setRules(data as Rule[]);
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function save() {
-    if (!edit?.name?.trim()) return;
-    setBusy(true);
-    const keywords = (edit.kw ?? "").split(",").map((k) => k.trim()).filter(Boolean);
-    const { error } = await supabase.rpc("admin_upsert_rule", {
-      p: { id: edit.id ?? null, name: edit.name, keywords, level: edit.level ?? "confidential", enabled: edit.enabled ?? true },
-    });
-    setBusy(false);
-    if (error) return toast(errorText(t, error), "error");
-    setEdit(null);
-    void load();
-  }
-
-  async function toggle(r: Rule, enabled: boolean) {
-    const { error } = await supabase.rpc("admin_upsert_rule", { p: { ...r, enabled } });
-    if (error) return toast(errorText(t, error), "error");
-    setRules((rs) => rs?.map((x) => (x.id === r.id ? { ...x, enabled } : x)) ?? rs);
-  }
-
-  async function remove(r: Rule) {
-    if (!window.confirm(t("admin.deleteRule"))) return;
-    const { error } = await supabase.rpc("admin_delete_rule", { p_rule: r.id });
-    if (error) return toast(errorText(t, error), "error");
-    setEdit(null);
-    void load();
-  }
-
-  return (
-    <div className="stack">
-      <div className="row end">
-        <Button onClick={() => setEdit({ name: "", kw: "", level: "confidential", enabled: true })}>{t("admin.addRule")}</Button>
-      </div>
-      {failed ? <ErrorState onRetry={load} /> : !rules ? <LoadingState /> : rules.length === 0
-        ? <EmptyState text={t("admin.noRules")} /> : (
-          <ul className="list card">
-            {rules.map((r) => (
-              <li key={r.id} className="list-row static">
-                <button type="button" className="list-main plain" onClick={() => setEdit({ ...r, kw: r.keywords.join(", ") })}>
-                  <b>{r.name}</b>
-                  <span className="muted small truncate">{r.keywords.join(", ")}</span>
-                </button>
-                <div className="row gap-sm">
-                  <LevelBadge level={r.level} />
-                  <Toggle label={t("admin.enabled")} checked={r.enabled} onChange={(v) => toggle(r, v)} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      <Modal open={Boolean(edit)} title={edit?.id ? edit.name ?? "" : t("admin.addRule")} onClose={() => setEdit(null)}
-        onDone={save} doneLoading={busy} doneDisabled={!edit?.name?.trim() || !edit?.kw?.trim()}>
-        {edit && (
-          <div className="stack">
-            <Field label={t("admin.ruleName")} value={edit.name ?? ""} maxLength={80} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
-            <TextArea label={t("admin.keywords")} value={edit.kw ?? ""} rows={3} onChange={(e) => setEdit({ ...edit, kw: e.target.value })} />
-            <Select label={t("admin.level")} value={edit.level ?? "confidential"} onChange={(v) => setEdit({ ...edit, level: v as Level })}
-              options={LEVELS.map((l) => ({ value: l, label: t(`levels.${l}`) }))} />
-            {edit.id && <Button variant="ghost" className="danger-text" onClick={() => remove(edit as Rule)}>{t("common.delete")}</Button>}
-          </div>
-        )}
       </Modal>
     </div>
   );

@@ -7,7 +7,7 @@
 | Қадам | Күйі |
 |---|---|
 | Supabase жобасы `senim` (`fanzgxjhldxpjskjwjoo`, Frankfurt) | ✅ ашылды |
-| Миграциялар 0001–0004 | ✅ қолданылды, қауіпсіздік кеңесшісі тексерілді |
+| Миграциялар 0001–0010 | ✅ қолданылды, қауіпсіздік кеңесшісі тексерілді |
 | Edge Functions `login`, `classify`, `send-push` | ✅ deploy жасалды |
 | Anthropic API кілті | ⏳ кейін (онсыз жіктеу тек ережелермен жүреді) |
 | Resend SMTP + хат үлгілері, Turnstile captcha | ⏳ |
