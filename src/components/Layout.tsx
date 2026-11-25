@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import type { Level } from "../lib/types";
-import { IconBell, IconChart, IconEdit, IconHistory, IconMenu, IconSettings, IconSidebar, IconUsers } from "./icons";
+import {
+  IconBell, IconChart, IconCheck, IconChevron, IconEdit, IconHistory, IconLogout, IconMenu, IconPlus, IconSettings, IconSidebar,
+  IconUser, IconUsers,
+} from "./icons";
 import { Avatar, LoadingState, Logo } from "./ui";
 
 interface RecentScan {
@@ -50,7 +53,6 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
         { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
         { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history", badge: 0 },
       ];
-  const name = profile?.display_name || profile?.nickname || "";
 
   return (
     <>
@@ -90,17 +92,76 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
         )}
       </div>
       )}
-      <div className="side-bottom">
-        <Link to="/profile" className="side-user" onClick={onNavigate}>
-          <Avatar url={profile?.avatar_url} name={name} size={32} />
-          <span className="truncate">{name}</span>
-        </Link>
-        <NavLink to="/settings" className="icon-btn side-settings" data-tour="nav-settings" onClick={onNavigate}
-          aria-label={t("nav.settings")} title={t("nav.settings")}>
-          <IconSettings />
-        </NavLink>
-      </div>
+      <AccountMenu onNavigate={onNavigate} />
     </>
+  );
+}
+
+/** ChatGPT-style account menu on the sidebar's bottom row. */
+function AccountMenu({ onNavigate }: { onNavigate: () => void }) {
+  const { t } = useTranslation();
+  const { profile, signOut } = useAuth();
+  const nav = useNavigate();
+  const loc = useLocation();
+  const [open, setOpen] = useState(false);
+  const [sub, setSub] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const name = profile?.display_name || profile?.nickname || "";
+
+  useEffect(() => { setOpen(false); setSub(false); }, [loc.pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: PointerEvent) => { if (!ref.current?.contains(e.target as Node)) { setOpen(false); setSub(false); } };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); setSub(false); } };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+
+  const go = (to: string) => { setOpen(false); onNavigate(); nav(to); };
+  async function anotherAccount() {
+    setOpen(false);
+    await signOut();
+    nav("/login", { replace: true });
+  }
+
+  return (
+    <div className="side-bottom account" ref={ref}>
+      {open && (
+        <div className="acct-menu" role="menu">
+          <button type="button" role="menuitem" className={`acct-head${sub ? " active" : ""}`} aria-expanded={sub}
+            onClick={() => setSub((v) => !v)}>
+            <Avatar url={profile?.avatar_url} name={name} size={32} />
+            <span className="acct-names"><b className="truncate">{name}</b><span className="muted small truncate">@{profile?.nickname}</span></span>
+            <IconChevron className="acct-chev" />
+          </button>
+          {sub && (
+            <div className="acct-sub" role="menu">
+              {profile?.email && <div className="acct-row muted"><IconUser /><span className="truncate">{profile.email}</span></div>}
+              <div className="acct-row">
+                <Avatar url={profile?.avatar_url} name={name} size={22} />
+                <span className="truncate">{name}</span>
+                <IconCheck className="acct-check" />
+              </div>
+              <hr />
+              <button type="button" role="menuitem" className="acct-row" onClick={anotherAccount}>
+                <IconPlus /><span>{t("nav.anotherAccount")}</span>
+              </button>
+            </div>
+          )}
+          <hr />
+          <button type="button" role="menuitem" className="acct-row" onClick={() => go("/profile")}><IconUser /><span>{t("nav.profile")}</span></button>
+          <button type="button" role="menuitem" className="acct-row" onClick={() => go("/settings")}><IconSettings /><span>{t("nav.settings")}</span></button>
+          <hr />
+          <button type="button" role="menuitem" className="acct-row" onClick={signOut}><IconLogout /><span>{t("settings.signOut")}</span></button>
+        </div>
+      )}
+      <button type="button" className={`side-user${open ? " active" : ""}`} data-tour="nav-settings" aria-haspopup="menu"
+        aria-expanded={open} onClick={() => { setOpen((v) => !v); setSub(false); }}>
+        <Avatar url={profile?.avatar_url} name={name} size={32} />
+        <span className="acct-names"><span className="truncate">{name}</span><span className="muted small truncate">@{profile?.nickname}</span></span>
+      </button>
+    </div>
   );
 }
 
