@@ -4,7 +4,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from "react
 import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import type { Level } from "../lib/types";
-import { IconBell, IconEdit, IconHistory, IconMenu, IconSettings, IconShield, IconSidebar } from "./icons";
+import { IconBell, IconChart, IconEdit, IconHistory, IconMenu, IconSettings, IconSidebar, IconUsers } from "./icons";
 import { Avatar, LoadingState, Logo } from "./ui";
 
 interface RecentScan {
@@ -42,7 +42,10 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
 
   // The admin account is for analytics only: no document tools, no history.
   const items = isAdmin
-    ? [{ to: "/admin", label: t("nav.admin"), icon: <IconShield />, tour: "nav-admin", badge: 0 }]
+    ? [
+        { to: "/admin", label: t("admin.overview"), icon: <IconChart />, tour: "nav-admin", badge: 0 },
+        { to: "/admin/users", label: t("admin.users"), icon: <IconUsers />, tour: "nav-admin-users", badge: 0 },
+      ]
     : [
         { to: "/notifications", label: t("nav.notifications"), icon: <IconBell />, tour: "nav-notifications", badge: unread },
         { to: "/history", label: t("nav.allHistory"), icon: <IconHistory />, tour: "nav-history", badge: 0 },
@@ -62,7 +65,7 @@ function Sidebar({ onNavigate }: { onNavigate: () => void }) {
           </button>
         )}
         {items.map((it) => (
-          <NavLink key={it.to} to={it.to} className="side-item" data-tour={it.tour} onClick={onNavigate}>
+          <NavLink key={it.to} to={it.to} end className="side-item" data-tour={it.tour} onClick={onNavigate}>
             <span className="side-icon">
               {it.icon}
               {it.badge ? <span className="nav-badge">{it.badge > 99 ? "99+" : it.badge}</span> : null}

@@ -54,7 +54,7 @@ export default function Notifications() {
     return t(`notifications.${n.kind}`, { file, level });
   };
   const href = (n: AppNotification) =>
-    n.kind === "dispute_new" ? "/admin?tab=reviews" : n.data.scan_id ? `/app/scans/${n.data.scan_id}` : "/app";
+    n.kind === "dispute_new" ? "/admin" : n.data.scan_id ? `/app/scans/${n.data.scan_id}` : "/app";
 
   const unread = items?.some((n) => !n.read_at);
 
