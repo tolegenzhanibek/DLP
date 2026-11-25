@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { AvatarCropper } from "../../components/AvatarCropper";
+import { PhotoViewer } from "../../components/PhotoViewer";
 import { IconCamera } from "../../components/icons";
 import {
   Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal, toast,
@@ -22,6 +23,8 @@ function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
   const input = useRef<HTMLInputElement>(null);
   const [crop, setCrop] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [viewing, setViewing] = useState(false);
+  const closeViewer = useCallback(() => setViewing(false), []);
 
   async function upload(blob: Blob) {
     setCrop(null);
@@ -39,14 +42,20 @@ function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
 
   return (
     <>
-      <button type="button" className={`avatar-picker${busy ? " busy" : ""}`} aria-label={label}
-        disabled={busy} onClick={() => input.current?.click()}>
-        <Avatar url={url} name={name} size={size} />
-        <span className="avatar-cam" aria-hidden="true">{busy ? <span className="spinner spinner-sm" /> : <IconCamera />}</span>
-      </button>
+      <span className={`avatar-picker${busy ? " busy" : ""}`}>
+        {url ? (
+          <button type="button" className="avatar-open" aria-label={t("profile.photo")} onClick={() => setViewing(true)}>
+            <Avatar url={url} name={name} size={size} />
+          </button>
+        ) : <Avatar url={url} name={name} size={size} />}
+        <button type="button" className="avatar-cam" aria-label={label} disabled={busy} onClick={() => input.current?.click()}>
+          {busy ? <span className="spinner spinner-sm" /> : <IconCamera />}
+        </button>
+      </span>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden
         onChange={(e) => { const file = e.target.files?.[0]; if (file) setCrop(file); e.target.value = ""; }} />
       {crop && <AvatarCropper file={crop} onCancel={() => setCrop(null)} onDone={upload} />}
+      {viewing && url && <PhotoViewer url={url} onClose={closeViewer} />}
     </>
   );
 }
@@ -127,6 +136,7 @@ export function PublicProfile() {
   const { nickname } = useParams();
   const [p, setP] = useState<(Pick<P, "id" | "nickname" | "display_name" | "avatar_url" | "created_at" | "last_seen_at">) | null | undefined>(undefined);
   const [failed, setFailed] = useState(false);
+  const [viewing, setViewing] = useState(false);
 
   useEffect(() => {
     void supabase.rpc("public_profile", { p_nickname: nickname }).then(({ data, error }) => {
@@ -143,7 +153,12 @@ export function PublicProfile() {
     <div className="page">
       <div className="card profile-card">
         <div className="profile-top">
-          <Avatar url={p.avatar_url} name={name} size={88} />
+          {p.avatar_url ? (
+            <button type="button" className="avatar-open" aria-label={t("profile.photo")} onClick={() => setViewing(true)}>
+              <Avatar url={p.avatar_url} name={name} size={88} />
+            </button>
+          ) : <Avatar url={p.avatar_url} name={name} size={88} />}
+          {viewing && p.avatar_url && <PhotoViewer url={p.avatar_url} onClose={() => setViewing(false)} />}
           <div className="profile-names">
             <h2>{name}</h2>
             <span className="muted">@{p.nickname}</span>
