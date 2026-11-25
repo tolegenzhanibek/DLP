@@ -2,31 +2,19 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { errorText } from "../lib/errors";
 import { supabase } from "../lib/supabase";
-import { LEVELS, type Level, type Scan } from "../lib/types";
+import { LEVELS, type Scan } from "../lib/types";
 import { fmtDateTime } from "../lib/format";
-import { Button, LevelBadge, Modal, ReviewBadge, TextArea, toast } from "./ui";
+import { Button, LevelBadge, ReviewBadge, toast } from "./ui";
 
 export function ScanResult({ scan, onChange }: { scan: Scan; onChange: (s: Scan) => void }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [level, setLevel] = useState<Level>(scan.final_level === "public" ? "internal" : "public");
-  const [comment, setComment] = useState("");
 
   async function confirm() {
     setBusy(true);
     const { data, error } = await supabase.rpc("confirm_scan", { p_scan: scan.id });
     setBusy(false);
     if (error) return toast(errorText(t, error), "error");
-    onChange(data as Scan);
-  }
-
-  async function dispute() {
-    setBusy(true);
-    const { data, error } = await supabase.rpc("dispute_scan", { p_scan: scan.id, p_level: level, p_comment: comment });
-    setBusy(false);
-    if (error) return toast(errorText(t, error), "error");
-    setOpen(false);
     onChange(data as Scan);
   }
 
@@ -102,36 +90,11 @@ export function ScanResult({ scan, onChange }: { scan: Scan; onChange: (s: Scan)
         )}
       </section>
 
-      {scan.user_suggested_level && (
-        <p className="note">
-          {t("scan.suggested", { level: t(`levels.${scan.user_suggested_level}`) })}
-          {scan.user_comment ? ` — ${scan.user_comment}` : ""}
-        </p>
-      )}
-      {scan.admin_comment && <p className="note">{t("scan.adminComment", { comment: scan.admin_comment })}</p>}
-
       {scan.review_status === "pending" && (
         <div className="row gap-sm actions">
           <Button onClick={confirm} loading={busy}>{t("scan.confirm")}</Button>
-          <Button variant="secondary" onClick={() => setOpen(true)} disabled={busy}>{t("scan.dispute")}</Button>
         </div>
       )}
-
-      <Modal open={open} title={t("scan.disputeTitle")} onClose={() => setOpen(false)} onDone={dispute}
-        doneLabel={t("common.send")} doneLoading={busy}>
-        <div className="stack">
-          <div className="level-picker" role="radiogroup" aria-label={t("admin.level")}>
-            {LEVELS.filter((l) => l !== scan.final_level).map((l) => (
-              <button key={l} type="button" role="radio" aria-checked={level === l}
-                className={level === l ? "active" : ""} onClick={() => setLevel(l)}>
-                <LevelBadge level={l} />
-              </button>
-            ))}
-          </div>
-          <TextArea label={t("scan.disputeComment")} value={comment} maxLength={500} rows={4}
-            onChange={(e) => setComment(e.target.value)} />
-        </div>
-      </Modal>
     </div>
   );
 }
