@@ -26,7 +26,7 @@ React, Vite, TypeScript, React Router, i18next (kk/ru/en) · Supabase (Postgres,
 
 ```
 src/                      фронтенд (pages, components, lib, i18n)
-supabase/migrations/      0001 core · 0002 scans · 0003 admin · 0004 integrations · … · 0010 admin daily · 0011 no disputes
+supabase/migrations/      0001 core · 0002 scans · 0003 admin · 0004 integrations · … · 0010 admin daily · 0011 no disputes · 0012 nickname locked
 supabase/functions/       login · classify · send-push · _shared/detectors.ts
 supabase/templates/       үш тілдегі хаттар (scripts/build-email-templates.mjs арқылы жасалады)
 supabase/tests/           Postgres-тегі RLS және RPC тесттері

@@ -2,28 +2,75 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useParams } from "react-router-dom";
 import { AvatarCropper } from "../../components/AvatarCropper";
+import { IconCamera } from "../../components/icons";
 import {
-  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal,
+  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal, toast,
 } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
-import { fmtDate, fmtDateTime, isOnline, NICK_RE } from "../../lib/format";
+import { fmtDate, fmtDateTime, isOnline } from "../../lib/format";
 import { supabase } from "../../lib/supabase";
 import type { Profile as P } from "../../lib/types";
 
-export default function Profile() {
+/** Avatar with a camera badge: tap → pick → crop → upload. Returns the public URL. */
+function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
+  url: string | null; name: string; size: number; label: string;
+  onUploaded: (url: string) => void | Promise<void>; onError: (msg: string) => void;
+}) {
   const { t } = useTranslation();
   const { profile } = useAuth();
+  const input = useRef<HTMLInputElement>(null);
+  const [crop, setCrop] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function upload(blob: Blob) {
+    setCrop(null);
+    if (!profile) return;
+    setBusy(true);
+    const path = `${profile.id}/${Date.now()}.webp`;
+    const { error } = await supabase.storage.from("avatars").upload(path, blob, { contentType: "image/webp", upsert: false });
+    if (error) {
+      setBusy(false);
+      return onError(errorText(t, error));
+    }
+    await onUploaded(supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl);
+    setBusy(false);
+  }
+
+  return (
+    <>
+      <button type="button" className={`avatar-picker${busy ? " busy" : ""}`} aria-label={label} title={label}
+        disabled={busy} onClick={() => input.current?.click()}>
+        <Avatar url={url} name={name} size={size} />
+        <span className="avatar-cam" aria-hidden="true">{busy ? <span className="spinner spinner-sm" /> : <IconCamera />}</span>
+      </button>
+      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp" hidden
+        onChange={(e) => { const file = e.target.files?.[0]; if (file) setCrop(file); e.target.value = ""; }} />
+      {crop && <AvatarCropper file={crop} onCancel={() => setCrop(null)} onDone={upload} />}
+    </>
+  );
+}
+
+export default function Profile() {
+  const { t } = useTranslation();
+  const { profile, patchProfile } = useAuth();
   const [editing, setEditing] = useState(false);
   if (!profile) return <LoadingState />;
   const name = profile.display_name || profile.nickname;
+
+  async function saveAvatar(url: string) {
+    const { data, error } = await supabase.rpc("update_my_profile", { p: { avatar_url: url } });
+    if (error) return toast(errorText(t, error), "error");
+    patchProfile(data as P);
+  }
 
   return (
     <div className="page">
       <header className="page-head"><h1>{t("profile.title")}</h1></header>
       <div className="card profile-card">
         <div className="profile-top">
-          <Avatar url={profile.avatar_url} name={name} size={88} />
+          <AvatarPicker url={profile.avatar_url} name={name} size={88} label={t("profile.changePhoto")}
+            onUploaded={saveAvatar} onError={(m) => toast(m, "error")} />
           <div className="profile-names">
             <h2>{name}</h2>
             <span className="muted">@{profile.nickname}</span>
@@ -41,35 +88,16 @@ export default function Profile() {
 function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) {
   const { t } = useTranslation();
   const { patchProfile } = useAuth();
-  const [f, setF] = useState({
-    display_name: profile.display_name ?? "",
-    nickname: profile.nickname,
-  });
+  const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [avatar, setAvatar] = useState<string | null>(profile.avatar_url);
-  const [crop, setCrop] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
-  const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((s) => ({ ...s, [k]: v }));
-
-  const nickOk = NICK_RE.test(f.nickname.trim().toLowerCase());
-
-  async function uploadAvatar(blob: Blob) {
-    setCrop(null);
-    setBusy(true);
-    const path = `${profile.id}/${Date.now()}.webp`;
-    const { error } = await supabase.storage.from("avatars").upload(path, blob, { contentType: "image/webp", upsert: false });
-    setBusy(false);
-    if (error) return setError(errorText(t, error));
-    setAvatar(supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl);
-  }
 
   async function save() {
-    if (!nickOk) return;
     setBusy(true);
     setError(null);
     const { data, error } = await supabase.rpc("update_my_profile", {
-      p: { display_name: f.display_name, nickname: f.nickname.trim().toLowerCase(), avatar_url: avatar ?? "" },
+      p: { display_name: displayName, avatar_url: avatar ?? "" },
     });
     setBusy(false);
     if (error) return setError(errorText(t, error));
@@ -78,27 +106,21 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
   }
 
   return (
-    <>
-      <Modal open title={t("profile.editTitle")} onClose={onClose} onDone={save} doneLoading={busy}
-        doneDisabled={!nickOk}>
-        <div className="stack">
-          <div className="avatar-edit">
-            <Avatar url={avatar} name={f.display_name || f.nickname} size={88} />
-            <div className="row gap-sm wrap">
-              <Button variant="secondary" onClick={() => fileInput.current?.click()}>{t("profile.changePhoto")}</Button>
-              {avatar && <Button variant="ghost" onClick={() => setAvatar(null)}>{t("profile.removePhoto")}</Button>}
-            </div>
-            <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" hidden
-              onChange={(e) => { const file = e.target.files?.[0]; if (file) setCrop(file); e.target.value = ""; }} />
-          </div>
-          <Field label={t("profile.displayName")} value={f.display_name} maxLength={60} onChange={(e) => set("display_name", e.target.value)} />
-          <Field label={t("auth.nickname")} value={f.nickname} maxLength={24} autoCapitalize="off"
-            onChange={(e) => set("nickname", e.target.value)} error={nickOk ? null : t("auth.nicknameInvalid")} />
-          {error && <p className="form-error" role="alert">{error}</p>}
+    <Modal open title={t("profile.editTitle")} onClose={onClose} onDone={save} doneLoading={busy}>
+      <div className="stack">
+        <div className="avatar-edit">
+          <AvatarPicker url={avatar} name={displayName || profile.nickname} size={88} label={t("profile.changePhoto")}
+            onUploaded={setAvatar} onError={setError} />
+          {avatar && <button type="button" className="link-btn small" onClick={() => setAvatar(null)}>{t("profile.removePhoto")}</button>}
         </div>
-      </Modal>
-      {crop && <AvatarCropper file={crop} onCancel={() => setCrop(null)} onDone={uploadAvatar} />}
-    </>
+        <Field label={t("profile.displayName")} value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} />
+        <div className="stack-xs">
+          <Field label={t("auth.nickname")} value={`@${profile.nickname}`} readOnly disabled />
+          <span className="muted small">{t("profile.nicknameLocked")}</span>
+        </div>
+        {error && <p className="form-error" role="alert">{error}</p>}
+      </div>
+    </Modal>
   );
 }
 
