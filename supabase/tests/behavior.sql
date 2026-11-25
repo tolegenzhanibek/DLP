@@ -35,6 +35,9 @@ do $$ begin perform public.update_my_profile('{"avatar_url":"https://evil/storag
 exception when sqlstate '22023' then raise notice 'OK foreign avatar rejected'; end $$;
 do $$ begin perform public.update_my_profile('{"nickname":"bob"}'); raise exception 'dup nick ok';
 exception when sqlstate '23505' then raise notice 'OK duplicate nickname rejected'; end $$;
+do $$ begin perform public.update_my_profile('{"nickname":"alice2"}'); raise exception 'nickname changed';
+exception when sqlstate '42501' then raise notice 'OK nickname locked (0012)'; end $$;
+select 'same nickname ok', (public.update_my_profile('{"nickname":"alice","display_name":"Alice B"}'))->>'display_name';
 select 'verify pw', public.verify_my_password('Password1!') ok, public.verify_my_password('nope') bad;
 do $$ begin perform public.confirm_scan(gen_random_uuid()); raise exception 'unknown scan confirmed';
 exception when sqlstate '22023' then raise notice 'OK unknown scan cannot be confirmed'; end $$;

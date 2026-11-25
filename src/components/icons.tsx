@@ -45,3 +45,4 @@ export const IconHistory = base("M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 3");
 export const IconGlobe = base("M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z");
 export const IconChevronDown = base("m6 9 6 6 6-6");
 export const IconChart = base("M3 3v18h18M7 16v-4M12 16V8M17 16v-7");
+export const IconCamera = base("M14.5 4h-5L7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.5zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7");

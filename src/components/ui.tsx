@@ -150,13 +150,17 @@ export function Modal({ open, title, onClose, onDone, doneLabel, doneLoading, do
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    // Only the top-most dialog reacts (the photo cropper opens above the edit sheet).
+    const onKey = (e: KeyboardEvent) => {
+      const all = document.querySelectorAll(".modal");
+      if (e.key === "Escape" && all[all.length - 1] === ref.current) onClose();
+    };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     ref.current?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
-      document.body.style.overflow = "";
+      if (document.querySelectorAll(".modal").length <= 1) document.body.style.overflow = "";
     };
   }, [open, onClose]);
   if (!open) return null;
@@ -216,12 +220,12 @@ export function ReviewBadge({ status }: { status: ReviewStatus }) {
 
 export function Avatar({ url, name, size = 40 }: { url?: string | null; name: string; size?: number }) {
   const [broken, setBroken] = useState(false);
-  const initials = name.slice(0, 2).toUpperCase();
+  const initials = (Array.from(name.trim())[0] ?? "?").toUpperCase();
   return url && !broken ? (
     <img className="avatar" src={url} alt="" width={size} height={size} onError={() => setBroken(true)}
       style={{ width: size, height: size }} />
   ) : (
-    <span className="avatar avatar-fallback" style={{ width: size, height: size, fontSize: size * 0.38 }}>{initials}</span>
+    <span className="avatar avatar-fallback" style={{ width: size, height: size, fontSize: size * 0.42 }}>{initials}</span>
   );
 }
 
