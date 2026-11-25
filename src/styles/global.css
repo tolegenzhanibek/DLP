@@ -693,9 +693,18 @@ a { color: var(--text); }
 :root[data-theme="dark"] { --lvc-public: #1f9d4f; --lvc-internal: #0a8fd0; --lvc-confidential: #c2860a; --lvc-restricted: #d9434e; }
 
 /* avatar with camera badge (profile photo) */
-.avatar-picker { position: relative; display: inline-flex; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; flex: none; }
-.avatar-picker:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
-.avatar-cam { position: absolute; right: -2px; bottom: -2px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); border: 3px solid var(--surface); }
+.avatar-picker { position: relative; display: inline-flex; flex: none; }
+.avatar-open { display: inline-flex; padding: 0; border: 0; background: none; border-radius: 50%; cursor: zoom-in; }
+.avatar-open:focus-visible, .avatar-cam:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.avatar-cam { cursor: pointer; padding: 0; position: absolute; right: -2px; bottom: -2px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); border: 3px solid var(--surface); }
 .avatar-cam svg { width: 16px; height: 16px; }
 .avatar-picker.busy { cursor: progress; }
 .field-control:has(input:disabled) { opacity: 0.7; }
+
+/* full-screen profile photo */
+.photo-viewer { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; overflow: hidden; background: #d9d9d9; animation: fade 0.15s ease-out; }
+.photo-viewer-bg { position: absolute; inset: -10%; width: 120%; height: 120%; object-fit: cover; filter: blur(70px) saturate(1.2); opacity: 0.55; transform: scale(1.1); pointer-events: none; }
+.photo-viewer-img { position: relative; width: min(450px, 82vw, 70vh); aspect-ratio: 1; border-radius: 50%; object-fit: cover; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18); cursor: default; }
+.photo-viewer-close { position: absolute; top: 20px; left: 20px; width: 48px; height: 48px; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: #111; cursor: pointer; }
+.photo-viewer-close:hover { background: rgba(255, 255, 255, 0.4); }
+.photo-viewer-close:focus-visible { outline: 2px solid #111; }

@@ -215,7 +215,8 @@
     "currentPassword": "Current password",
     "memberSince": "Since {{date}}",
     "online": "Online",
-    "lastSeen": "Seen {{date}}"
+    "lastSeen": "Seen {{date}}",
+    "photo": "Profile photo"
   },
   "settings": {
     "title": "Settings",

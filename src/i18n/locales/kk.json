@@ -215,7 +215,8 @@
     "currentPassword": "Қазіргі құпиясөз",
     "memberSince": "{{date}} бастап",
     "online": "Желіде",
-    "lastSeen": "Соңғы рет {{date}}"
+    "lastSeen": "Соңғы рет {{date}}",
+    "photo": "Профиль суреті"
   },
   "settings": {
     "title": "Баптаулар",

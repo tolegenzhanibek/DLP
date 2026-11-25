@@ -215,7 +215,8 @@
     "currentPassword": "Текущий пароль",
     "memberSince": "С {{date}}",
     "online": "В сети",
-    "lastSeen": "Был(а) {{date}}"
+    "lastSeen": "Был(а) {{date}}",
+    "photo": "Фото профиля"
   },
   "settings": {
     "title": "Настройки",
