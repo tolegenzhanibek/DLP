@@ -215,8 +215,7 @@
     "currentPassword": "Current password",
     "memberSince": "Since {{date}}",
     "online": "Online",
-    "lastSeen": "Seen {{date}}",
-    "nicknameLocked": "Your nickname can’t be changed after sign-up"
+    "lastSeen": "Seen {{date}}"
   },
   "settings": {
     "title": "Settings",

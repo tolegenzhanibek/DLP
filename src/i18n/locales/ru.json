@@ -215,8 +215,7 @@
     "currentPassword": "Текущий пароль",
     "memberSince": "С {{date}}",
     "online": "В сети",
-    "lastSeen": "Был(а) {{date}}",
-    "nicknameLocked": "Никнейм нельзя изменить после регистрации"
+    "lastSeen": "Был(а) {{date}}"
   },
   "settings": {
     "title": "Настройки",

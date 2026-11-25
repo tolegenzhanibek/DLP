@@ -39,7 +39,7 @@ function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
 
   return (
     <>
-      <button type="button" className={`avatar-picker${busy ? " busy" : ""}`} aria-label={label} title={label}
+      <button type="button" className={`avatar-picker${busy ? " busy" : ""}`} aria-label={label}
         disabled={busy} onClick={() => input.current?.click()}>
         <Avatar url={url} name={name} size={size} />
         <span className="avatar-cam" aria-hidden="true">{busy ? <span className="spinner spinner-sm" /> : <IconCamera />}</span>
@@ -114,10 +114,7 @@ function EditProfile({ profile, onClose }: { profile: P; onClose: () => void }) 
           {avatar && <button type="button" className="link-btn small" onClick={() => setAvatar(null)}>{t("profile.removePhoto")}</button>}
         </div>
         <Field label={t("profile.displayName")} value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} />
-        <div className="stack-xs">
-          <Field label={t("auth.nickname")} value={`@${profile.nickname}`} readOnly disabled />
-          <span className="muted small">{t("profile.nicknameLocked")}</span>
-        </div>
+        <Field label={t("auth.nickname")} value={`@${profile.nickname}`} readOnly disabled />
         {error && <p className="form-error" role="alert">{error}</p>}
       </div>
     </Modal>

@@ -695,9 +695,7 @@ a { color: var(--text); }
 /* avatar with camera badge (profile photo) */
 .avatar-picker { position: relative; display: inline-flex; padding: 0; border: 0; background: none; border-radius: 50%; cursor: pointer; flex: none; }
 .avatar-picker:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
-.avatar-picker:hover .avatar { filter: brightness(0.94); }
 .avatar-cam { position: absolute; right: -2px; bottom: -2px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--text); color: var(--bg); border: 3px solid var(--surface); }
 .avatar-cam svg { width: 16px; height: 16px; }
 .avatar-picker.busy { cursor: progress; }
-.stack-xs { display: flex; flex-direction: column; gap: 6px; }
 .field-control:has(input:disabled) { opacity: 0.7; }

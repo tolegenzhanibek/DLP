@@ -215,8 +215,7 @@
     "currentPassword": "Қазіргі құпиясөз",
     "memberSince": "{{date}} бастап",
     "online": "Желіде",
-    "lastSeen": "Соңғы рет {{date}}",
-    "nicknameLocked": "Никнейм тіркелгеннен кейін өзгермейді"
+    "lastSeen": "Соңғы рет {{date}}"
   },
   "settings": {
     "title": "Баптаулар",
