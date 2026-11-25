@@ -2,9 +2,9 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, Navigate, NavLink, useNavigate, useParams } from "react-router-dom";
 import {
-  IconArrowLeft, IconArrowUpRight, IconChevron, IconEdit, IconKey, IconLogout, IconSettings, IconSun, IconUser,
+  IconArrowLeft, IconChevron, IconEdit, IconKey, IconLogout, IconSettings, IconSun, IconUser,
 } from "../../components/icons";
-import { Avatar, Button, ErrorState, Field, LoadingState, Modal, PasswordField, toast } from "../../components/ui";
+import { Button, ErrorState, Field, LoadingState, Modal, PasswordField, toast } from "../../components/ui";
 import { setLanguage, type Lang } from "../../i18n";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
@@ -42,7 +42,6 @@ export default function Settings() {
   if (!profile) return <div className="fullscreen"><LoadingState /></div>;
   if (section && !SECTIONS.includes(section as Section)) return <Navigate to="/settings" replace />;
   const current = (section as Section | undefined) ?? "account";
-  const name = profile.display_name || profile.nickname;
   const home = profile.role === "admin" ? "/admin" : "/app";
   const icons: Record<Section, ReactNode> = {
     security: <IconKey />, account: <IconUser />, general: <IconSettings />, appearance: <IconSun />,
@@ -57,11 +56,6 @@ export default function Settings() {
     <div className={`settings-shell${section ? " has-section" : ""}`}>
       <aside className="settings-nav">
         <Link to={home} className="side-item settings-back"><IconArrowLeft /><span>{t("settings.back")}</span></Link>
-        <div className="side-label">{t("nav.profile")}</div>
-        <Link to="/profile" className="side-item">
-          <Avatar url={profile.avatar_url} name={name} size={24} /><span className="truncate">{name}</span>
-          <IconArrowUpRight className="muted settings-ext" />
-        </Link>
         <div className="side-label">{t("settings.g_account")}</div>
         {item("security")}{item("account")}
         <div className="side-label">{t("settings.g_app")}</div>
