@@ -5,7 +5,7 @@ import { AvatarCropper } from "../../components/AvatarCropper";
 import { PhotoViewer } from "../../components/PhotoViewer";
 import { IconCamera } from "../../components/icons";
 import {
-  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal, toast,
+  Avatar, Button, EmptyState, ErrorState, Field, LoadingState, Modal,
 } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { errorText } from "../../lib/errors";
@@ -60,26 +60,36 @@ function AvatarPicker({ url, name, size, label, onUploaded, onError }: {
   );
 }
 
+/** Avatar that opens the full-screen viewer when a photo is set. */
+function AvatarView({ url, name, size }: { url: string | null; name: string; size: number }) {
+  const { t } = useTranslation();
+  const [viewing, setViewing] = useState(false);
+  const close = useCallback(() => setViewing(false), []);
+  if (!url) return <Avatar url={url} name={name} size={size} />;
+  return (
+    <>
+      <button type="button" className="avatar-open" aria-label={t("profile.photo")} onClick={() => setViewing(true)}>
+        <Avatar url={url} name={name} size={size} />
+      </button>
+      {viewing && <PhotoViewer url={url} onClose={close} />}
+    </>
+  );
+}
+
 export default function Profile() {
   const { t } = useTranslation();
-  const { profile, patchProfile } = useAuth();
+  const { profile } = useAuth();
   const [editing, setEditing] = useState(false);
   if (!profile) return <LoadingState />;
   const name = profile.display_name || profile.nickname;
 
-  async function saveAvatar(url: string) {
-    const { data, error } = await supabase.rpc("update_my_profile", { p: { avatar_url: url } });
-    if (error) return toast(errorText(t, error), "error");
-    patchProfile(data as P);
-  }
 
   return (
     <div className="page">
       <header className="page-head"><h1>{t("profile.title")}</h1></header>
       <div className="card profile-card">
         <div className="profile-top">
-          <AvatarPicker url={profile.avatar_url} name={name} size={88} label={t("profile.changePhoto")}
-            onUploaded={saveAvatar} onError={(m) => toast(m, "error")} />
+          <AvatarView url={profile.avatar_url} name={name} size={88} />
           <div className="profile-names">
             <h2>{name}</h2>
             <span className="muted">@{profile.nickname}</span>
@@ -136,7 +146,6 @@ export function PublicProfile() {
   const { nickname } = useParams();
   const [p, setP] = useState<(Pick<P, "id" | "nickname" | "display_name" | "avatar_url" | "created_at" | "last_seen_at">) | null | undefined>(undefined);
   const [failed, setFailed] = useState(false);
-  const [viewing, setViewing] = useState(false);
 
   useEffect(() => {
     void supabase.rpc("public_profile", { p_nickname: nickname }).then(({ data, error }) => {
@@ -153,12 +162,7 @@ export function PublicProfile() {
     <div className="page">
       <div className="card profile-card">
         <div className="profile-top">
-          {p.avatar_url ? (
-            <button type="button" className="avatar-open" aria-label={t("profile.photo")} onClick={() => setViewing(true)}>
-              <Avatar url={p.avatar_url} name={name} size={88} />
-            </button>
-          ) : <Avatar url={p.avatar_url} name={name} size={88} />}
-          {viewing && p.avatar_url && <PhotoViewer url={p.avatar_url} onClose={() => setViewing(false)} />}
+          <AvatarView url={p.avatar_url} name={name} size={88} />
           <div className="profile-names">
             <h2>{name}</h2>
             <span className="muted">@{p.nickname}</span>
