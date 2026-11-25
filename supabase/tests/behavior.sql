@@ -52,12 +52,13 @@ select 'record', (public.record_scan('22222222-2222-2222-2222-222222222222',
   '{"file_name":"a.pdf","char_count":10,"rule_level":"confidential","ai_level":"internal","final_level":"confidential","ai_status":"ok","categories":["pii"],"findings":[{"type":"iin","count":2}]}')).review_status;
 reset role;
 
--- bob disputes
+-- bob cannot dispute any more (0011)
 set role authenticated;
 select set_config('request.jwt.claims','{"sub":"22222222-2222-2222-2222-222222222222","aal":"aal1"}',false);
 select set_config('request.jwt.claim.sub','22222222-2222-2222-2222-222222222222',false);
 select 'bob scans', count(*) from public.scans;
-select 'dispute', (public.dispute_scan((select id from public.scans limit 1),'internal','just names')).review_status;
+do $$ begin perform public.dispute_scan((select id from public.scans limit 1),'internal','x'); raise exception 'dispute open';
+exception when insufficient_privilege then raise notice 'OK dispute_scan closed'; end $$;
 reset role;
 
 -- admin WITHOUT mfa
@@ -71,7 +72,8 @@ select set_config('request.jwt.claims','{"sub":"33333333-3333-3333-3333-33333333
 select 'stats daily (0010)', jsonb_array_length(public.admin_stats(7)->'daily') d7, jsonb_array_length(public.admin_stats(1000)->'daily') clamp90,
   (public.admin_stats()->'daily'->-1->>'scans')::int today_scans, public.admin_stats()->>'days' def_days;
 select 'admin sees scans', count(*) from public.scans;
-select 'resolve', (public.admin_resolve_scan((select id from public.scans limit 1), true, 'ok')).final_level;
+do $$ begin perform public.admin_resolve_scan((select id from public.scans limit 1), true, 'ok'); raise exception 'resolve open';
+exception when insufficient_privilege then raise notice 'OK admin_resolve_scan closed'; end $$;
 select public.admin_set_user_status('11111111-1111-1111-1111-111111111111','active');
 do $$ begin perform public.admin_set_user_status('33333333-3333-3333-3333-333333333333','blocked'); raise exception 'self block';
 exception when sqlstate '22023' then raise notice 'OK cannot block self'; end $$;

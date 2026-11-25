@@ -8,7 +8,7 @@ import { fmtDateTime } from "../../lib/format";
 import { supabase } from "../../lib/supabase";
 import type { ReviewStatus, Scan } from "../../lib/types";
 
-const FILTERS: ("all" | ReviewStatus)[] = ["all", "pending", "confirmed", "disputed", "rejected"];
+const FILTERS: ("all" | ReviewStatus)[] = ["all", "pending", "confirmed"];
 
 export default function History() {
   const { t } = useTranslation();
