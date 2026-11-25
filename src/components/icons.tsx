@@ -46,3 +46,7 @@ export const IconGlobe = base("M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM2 12h20
 export const IconChevronDown = base("m6 9 6 6 6-6");
 export const IconChart = base("M3 3v18h18M7 16v-4M12 16V8M17 16v-7");
 export const IconCamera = base("M14.5 4h-5L7.5 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.5zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7");
+export const IconArrowLeft = base("M19 12H5M12 19l-7-7 7-7");
+export const IconArrowUpRight = base("M7 17 17 7M7 7h10v10");
+export const IconSun = base("M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4");
+export const IconKey = base("M15.5 7.5a3.5 3.5 0 1 1-4.9 3.2L3 18.3V21h3v-2h2v-2h2l1.6-1.6a3.5 3.5 0 0 1 3.9-7.9zM16.5 6.5h.01");

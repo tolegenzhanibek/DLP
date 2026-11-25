@@ -731,3 +731,59 @@ button.acct-row:hover { background: var(--hover); }
   .acct-sub { position: static; width: auto; max-width: none; border: 0; box-shadow: none; padding: 0 0 0 8px; background: transparent; }
   .acct-head .acct-chev { transform: rotate(90deg); }
 }
+
+/* =====================================================================
+   Settings (ChatGPT-style): own left navigation + one section per page
+   ===================================================================== */
+.settings-shell { display: flex; min-height: 100dvh; background: var(--bg); }
+.settings-nav { width: 300px; flex: none; background: var(--side); border-right: 1px solid var(--border); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; position: sticky; top: 0; height: 100dvh; overflow-y: auto; }
+.settings-nav .side-label { margin: 18px 10px 6px; }
+.settings-nav .settings-back { margin: 24px 0 4px; }
+.settings-nav .side-item.index-active { background: var(--hover); font-weight: 600; }
+.settings-ext { margin-left: auto; width: 16px; height: 16px; }
+.settings-main { flex: 1; min-width: 0; padding: 40px 32px 64px; max-width: 1020px; margin: 0 auto; }
+.settings-head h1 { font-size: 28px; font-weight: 500; margin: 0; letter-spacing: -0.01em; }
+.settings-head p { margin: 6px 0 0; font-size: 16px; }
+.settings-mback { display: none; }
+.sgroup { margin-top: 40px; }
+.sgroup h2 { font-size: 17px; font-weight: 600; margin: 0 0 12px; }
+.sgroup .srow + .srow, .sgroup h2 + .srow, .sgroup h2 + .session-list { border-top: 1px solid var(--border); }
+.srow { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 18px 0; width: 100%; background: none; border: 0; text-align: left; color: var(--text); font: inherit; }
+.srow.clickable { cursor: pointer; }
+.srow.clickable:hover .srow-value { color: var(--text); }
+.srow-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.srow-text b { font-weight: 600; font-size: 15px; }
+.srow-text .muted { font-size: 14px; }
+.srow-value { display: flex; align-items: center; gap: 8px; flex: none; max-width: 55%; min-width: 0; color: var(--text); font-size: 15px; }
+.srow-value .icon-btn { color: var(--muted); }
+.srow-wrap { flex-wrap: wrap; }
+.sgroup .session-list { padding-top: 8px; }
+.pill-select { appearance: none; border: 1px solid var(--border); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center; border-radius: 999px; padding: 10px 40px 10px 16px; font: inherit; color: var(--text); cursor: pointer; }
+.theme-cards { display: flex; gap: 14px; }
+.theme-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--muted); font: inherit; font-size: 13px; }
+.theme-card.active { color: var(--text); font-weight: 600; }
+.tc-preview { position: relative; display: block; width: 100px; height: 72px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #fcfcfc; }
+.theme-card.active .tc-preview { outline: 2px solid var(--text); outline-offset: 2px; }
+.theme-dark .tc-preview { background: #1b1b1b; border-color: #333; }
+.theme-system .tc-preview { background: linear-gradient(90deg, #fcfcfc 50%, #1b1b1b 50%); }
+.tc-side { position: absolute; left: 0; top: 0; bottom: 0; width: 22px; background: #ececec; }
+.theme-dark .tc-side { background: #262626; }
+.theme-system .tc-side { background: #ececec; }
+.tc-line { position: absolute; left: 32px; height: 4px; border-radius: 3px; background: #c9c9c9; }
+.tc-line.l1 { top: 18px; width: 50px; } .tc-line.l2 { top: 30px; width: 40px; } .tc-line.l3 { top: 42px; width: 56px; background: #0d0d0d; }
+.theme-dark .tc-line { background: #4a4a4a; } .theme-dark .tc-line.l3 { background: #f2f2f2; }
+.theme-system .tc-line.l3 { background: linear-gradient(90deg, #0d0d0d 18px, #f2f2f2 18px); }
+@media (max-width: 767px) {
+  .settings-shell { display: block; }
+  .settings-nav { width: auto; height: auto; position: static; border-right: 0; min-height: 100dvh; }
+  .settings-shell .settings-main { display: none; }
+  .settings-shell.has-section .settings-nav { display: none; }
+  .settings-shell.has-section .settings-main { display: block; padding: 16px 16px 48px; }
+  .settings-nav .side-item.index-active { background: none; font-weight: 400; }
+  .settings-mback { display: inline-flex; align-items: center; gap: 8px; color: var(--text); text-decoration: none; margin-bottom: 20px; font-weight: 600; }
+  .settings-head h1 { font-size: 24px; }
+  .srow { gap: 12px; }
+  .srow-value { max-width: 50%; }
+  .srow-wrap .theme-cards { width: 100%; justify-content: space-between; }
+  .tc-preview { width: 92px; }
+}
